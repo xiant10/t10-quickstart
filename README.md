@@ -21,9 +21,9 @@ flowchart LR
 | Service | Role | Address |
 | --- | --- | --- |
 | `workbench` | Web client | <http://127.0.0.1:18083> |
-| `auth-server` | Users, tenants, tokens and agent grants | `localhost:18081` |
-| `agent-pi` | The agent loop, and the conversations | `127.0.0.1:19800` |
-| `t10-collab` | The agent's tools, an MCP server for tasks | `127.0.0.1:18082` |
+| `auth-server` | Users, tenants, tokens and agent grants | <http://127.0.0.1:18081> |
+| `agent-pi` | The agent loop, and the conversations | <http://127.0.0.1:19800> |
+| `t10-collab` | The agent's tools, an MCP server for tasks | <http://127.0.0.1:18082> |
 | Postgres | Storage for `auth-server`, `workbench` and `t10-collab` | Not published |
 
 `agent-pi` keeps conversations in SQLite on its own volume.
@@ -56,7 +56,7 @@ Open <http://127.0.0.1:18083>, using `127.0.0.1` rather than `localhost`, and si
 
 | | |
 | --- | --- |
-| Name | `ada@acme.example` |
+| Username / Email | `ada@acme.example` |
 | Password | `change-me-enterprise-admin` |
 
 ## Things to try
@@ -83,10 +83,12 @@ docker compose restart agent-pi
 
 ## Check it without a model key
 
-`check.sh` starts a separate copy with a scripted model, runs one tool call, and removes that copy. Stop your own stack first, because they use the same ports.
+`check.sh` starts a separate copy with a scripted model, runs one tool call, and removes that copy. Stop your own stack first if it is running, because both use the same ports:
 
 ```sh
+docker compose stop
 ./check.sh
+docker compose up -d
 ```
 
 ## Choose a model
@@ -116,6 +118,7 @@ docker compose down -v     # Deletes everything
 | --- | --- |
 | LiveKit and a voice worker | Live calls. The **Call** button in `workbench` doesn't work in this stack |
 | `ai-gateway` | Several replicas, model aliases, provider fallback, quotas and model-call audit |
+| Other MCP servers (e.g. weather) | Additional domain tools. This stack wires up `t10-collab` for task management |
 
 ## Troubleshooting
 
