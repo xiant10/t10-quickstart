@@ -1,0 +1,13 @@
+# Builds from sibling checkouts instead of the pinned commits, to try local
+# changes: docker compose -f docker-compose.yml -f compose.dev.yml up -d --build --wait
+services:
+  seed:
+    build: !override ../auth-server
+  auth-server:
+    build: !override ../auth-server
+  t10-collab:
+    build: !override ../t10-collab
+  agent-pi:
+    build: !override ../agent-pi
+  workbench:
+    build: !override ../workbench

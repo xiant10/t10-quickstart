@@ -1,0 +1,12 @@
+# Adds a scripted model, so the check needs no provider or key.
+services:
+  fake-model:
+    image: node:24.21.0-bookworm-slim
+    command: ["node", "/fake-model.mjs"]
+    volumes:
+      - ./scripted/fake-model.mjs:/fake-model.mjs:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/seen').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 2s
+      timeout: 3s
+      retries: 15

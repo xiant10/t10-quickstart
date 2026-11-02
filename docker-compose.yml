@@ -1,0 +1,144 @@
+# The smallest t10 that works as an agent: a harness, an identity service, a tool
+# server and a web client. Local use only: dev mode and dev secrets, so every
+# port is published on loopback. See README.md.
+#
+# Each service builds from a pinned commit, so these versions are known to work
+# together.
+name: t10-quickstart
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: t10
+      POSTGRES_PASSWORD: quickstart-dev-password
+      POSTGRES_DB: auth
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U t10 -d auth"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - ./config/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+      - postgres-data:/var/lib/postgresql/data
+
+  # One-shot: creates the sample user and the service accounts, then exits.
+  seed:
+    build: &auth-server https://github.com/xiant10/auth-server.git#8cad7e92ad3e49c20a5f4461bf1b18b09f53bb6f
+    entrypoint: ["auth-setup"]
+    environment:
+      DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/auth?sslmode=disable
+      AUTHCTL_PASSWORD: change-me-enterprise-admin
+      AUTH_SETUP_ADMIN: ada@acme.example
+      AUTH_SETUP_TENANT_ID: ten_acme
+      AUTH_SETUP_TENANT_NAME: Acme
+      AGENT_PI_SECRET: dev-only-agent-pi-service-secret-change-me
+      T10_COLLAB_SECRET: dev-only-t10-collab-service-secret-change-me
+      # Setup needs these, and this stack runs neither service.
+      LIVEKIT_AGENT_SECRET: dev-only-unused-in-quickstart-secret
+      AGENT_SALES_SECRET: dev-only-unused-in-quickstart-secret
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  auth-server:
+    build: *auth-server
+    environment:
+      AUTH_DEV_MODE: "true"
+      AUTH_PUBLIC_URL: http://localhost:18081
+      AUTH_TOTP_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/auth?sslmode=disable
+      # Required by the server. Calls aren't part of this stack.
+      LIVEKIT_URL: ws://localhost:8890
+      LIVEKIT_API_KEY: devkey
+      LIVEKIT_API_SECRET: change-me-to-a-32-plus-character-secret
+    volumes:
+      - ./config/clients.yaml:/etc/t10-auth/clients.yaml:ro
+    ports:
+      - "127.0.0.1:18081:8081"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8081/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+
+  t10-collab:
+    build: https://github.com/xiant10/t10-collab.git#58abc4f7ea973d7c1b6a226e26eb03e07a18c1fa
+    environment:
+      DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/collab?sslmode=disable
+      AUTH_ISSUER: http://localhost:18081
+      AUTH_URL: http://auth-server:8081
+      AUTH_CLIENT_SECRET: dev-only-t10-collab-service-secret-change-me
+    ports:
+      - "127.0.0.1:18082:8082"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8082/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      auth-server:
+        condition: service_healthy
+
+  agent-pi:
+    build: https://github.com/xiant10/agent-pi.git#e5fbe45a0e5e79d93d9dec9ef921c5422891a1db
+    environment:
+      AGENT_CONFIG: /app/apps/assistant/config/agent.json
+      AGENT_INSTANCE_ID: quickstart-0
+      AUTH_KIND: jwt
+      JWT_JWKS_URL: http://auth-server:8081/.well-known/jwks.json
+      JWT_ISSUER: http://localhost:18081
+      JWT_AUDIENCE: t10,agent-pi
+      JWT_TENANT_CLAIM: tid
+      # Grants let a run call tools as the person who asked.
+      AUTH_URL: http://auth-server:8081
+      AUTH_CLIENT_ID: agent-pi
+      AUTH_CLIENT_SECRET: dev-only-agent-pi-service-secret-change-me
+      GRANT_ACTIONS: agent:use,work:read,work:write
+      GRANT_AUDIENCES: agent-pi,t10-collab
+      COLLAB_MCP_URL: http://t10-collab:8082/mcp
+      # A provider directly, so no user or tenant ID leaves with a model call.
+      LLM_IDENTITY_HEADERS: none
+      LLM_BASE_URL: "${LLM_BASE_URL:?copy .env.example to .env and set it}"
+      LLM_API_KEY: "${LLM_API_KEY:?copy .env.example to .env and set it}"
+      LLM_API: "${LLM_API:-chat-completions}"
+      FAST_MODEL_ID: "${FAST_MODEL_ID:?copy .env.example to .env and set it}"
+      SMART_MODEL_ID: "${SMART_MODEL_ID:?copy .env.example to .env and set it}"
+    volumes:
+      - agent-data:/data
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    ports:
+      - "127.0.0.1:19800:9800"
+    depends_on:
+      t10-collab:
+        condition: service_healthy
+
+  workbench:
+    build: https://github.com/xiant10/workbench.git#26912cf2d6c2443f7ad357a5297ed1817bb75712
+    environment:
+      DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/workbench?sslmode=disable
+      AUTH_PUBLIC_URL: http://localhost:18081
+      AUTH_URL: http://auth-server:8081
+      AUTH_CLIENT_SECRET: dev-only-t10-workbench-client-secret-change-me
+      WORKBENCH_PUBLIC_URL: http://127.0.0.1:18083
+      WORKBENCH_SESSION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      AGENT_URLS: assistant=http://agent-pi:9800
+      LIVEKIT_URL: ws://localhost:8890
+    ports:
+      - "127.0.0.1:18083:8083"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8083/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      agent-pi:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  agent-data:

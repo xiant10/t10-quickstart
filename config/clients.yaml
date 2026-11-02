@@ -1,0 +1,23 @@
+clients:
+  - id: t10-workbench
+    name: t10 workbench
+    type: confidential
+    redirect_uris:
+      - http://127.0.0.1:18083/auth/callback
+    # The hash of the dev secret in docker-compose.yml.
+    secret_sha256: 3b2a1c8150447544142ed749be66a8a5cc8c4c25a0fb17e9b5e596313775cd11
+    idle_ttl: 12h
+    absolute_ttl: 168h
+  # Public, so scripts can sign in with the dev password grant.
+  - id: t10-mac-client
+    name: t10 for Mac
+    type: public
+    redirect_uris:
+      - http://127.0.0.1/callback
+    idle_ttl: 720h
+    absolute_ttl: 2160h
+
+runtimes:
+  - name: agent-pi
+    actions: [agent:use, work:read, work:write]
+    audiences: [agent-pi, t10-collab]
