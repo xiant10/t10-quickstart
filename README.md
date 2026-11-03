@@ -2,7 +2,7 @@
 
 Run a small multi-user agent platform on your machine with Docker. You sign in to a web client and ask an agent to do something. It calls real tools as you, and the results are stored in a real service.
 
-This repo holds only the instructions and the Compose file. Each service builds from its own repo, at a pinned commit.
+This repo holds only the instructions and the Compose file. Each service builds from its own repo, at a pinned commit. Every service in it is open source under the Apache License 2.0.
 
 > **Local use only.** This stack runs in dev mode with secrets that are published in this repo. Its ports are bound to `127.0.0.1`. Don't expose them to a network.
 
@@ -83,7 +83,7 @@ docker compose restart agent-pi
 
 ## Check it without a model key
 
-`check.sh` starts a separate copy with a scripted model, runs one tool call, and removes that copy. Stop your own stack first if it is running, because both use the same ports:
+`check.sh` starts a separate copy with a scripted model, sends one turn and one tool call, checks that no identity header reached the model, and removes that copy. `DEV=1 ./check.sh` builds from sibling checkouts instead. Stop your own stack first if it is running, because both use the same ports:
 
 ```sh
 docker compose stop
@@ -137,3 +137,7 @@ To build from your own checkouts, put them beside this folder, using the repo na
 ```sh
 docker compose -f docker-compose.yml -f compose.dev.yml up -d --build --wait
 ```
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE).

@@ -24,7 +24,7 @@ services:
 
   # One-shot: creates the sample user and the service accounts, then exits.
   seed:
-    build: &auth-server https://github.com/xiant10/auth-server.git#8cad7e92ad3e49c20a5f4461bf1b18b09f53bb6f
+    build: &auth-server https://github.com/xiant10/auth-server.git#557ead35b17eb2a7181253549f087af1a977368f
     entrypoint: ["auth-setup"]
     environment:
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/auth?sslmode=disable
@@ -34,9 +34,6 @@ services:
       AUTH_SETUP_TENANT_NAME: Acme
       AGENT_PI_SECRET: dev-only-agent-pi-service-secret-change-me
       T10_COLLAB_SECRET: dev-only-t10-collab-service-secret-change-me
-      # Setup needs these, and this stack runs neither service.
-      LIVEKIT_AGENT_SECRET: dev-only-unused-in-quickstart-secret
-      AGENT_SALES_SECRET: dev-only-unused-in-quickstart-secret
     depends_on:
       postgres:
         condition: service_healthy
@@ -46,6 +43,8 @@ services:
     environment:
       AUTH_DEV_MODE: "true"
       AUTH_PUBLIC_URL: http://localhost:18081
+      # Where auth-server's /admin sends a tenant admin.
+      AUTH_WORKBENCH_URL: http://127.0.0.1:18083
       AUTH_TOTP_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/auth?sslmode=disable
       # Required by the server. Calls aren't part of this stack.
@@ -66,7 +65,7 @@ services:
         condition: service_completed_successfully
 
   t10-collab:
-    build: https://github.com/xiant10/t10-collab.git#58abc4f7ea973d7c1b6a226e26eb03e07a18c1fa
+    build: https://github.com/xiant10/t10-collab.git#cb5f3e8a5fe3b5d5f5337299e120e76a7934b58f
     environment:
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/collab?sslmode=disable
       AUTH_ISSUER: http://localhost:18081
@@ -84,7 +83,7 @@ services:
         condition: service_healthy
 
   agent-pi:
-    build: https://github.com/xiant10/agent-pi.git#e5fbe45a0e5e79d93d9dec9ef921c5422891a1db
+    build: https://github.com/xiant10/agent-pi.git#e4ae576546b1b304c0ab6db32b4a69a0556b5fc2
     environment:
       AGENT_CONFIG: /app/apps/assistant/config/agent.json
       AGENT_INSTANCE_ID: quickstart-0
@@ -118,7 +117,7 @@ services:
         condition: service_healthy
 
   workbench:
-    build: https://github.com/xiant10/workbench.git#26912cf2d6c2443f7ad357a5297ed1817bb75712
+    build: https://github.com/xiant10/workbench.git#3feb8e06beaf2ee3c722fe4c3dd21a1e31c0047d
     environment:
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/workbench?sslmode=disable
       AUTH_PUBLIC_URL: http://localhost:18081
