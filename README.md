@@ -54,11 +54,15 @@ cp .env.example .env
 
 Set your provider in `.env`, then start the stack.
 
-### Option A: Using pre-built images from GHCR (Fastest)
+### Option A: One-command Quickstart with pre-built GHCR images (Fastest)
+
+Runs the entire stack in seconds using official multi-arch images from GitHub Container Registry (`ghcr.io`):
 
 ```sh
-docker compose -f docker-compose.yml -f compose.ghcr.yml up -d --wait
+docker compose -f compose.quick.yml up -d --wait
 ```
+
+*(Or `docker compose -f docker-compose.quick.yml up -d --wait`)*
 
 ### Option B: Building from source
 

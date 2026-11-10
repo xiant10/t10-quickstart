@@ -85,6 +85,7 @@ services:
   agent-pi:
     build: https://github.com/xiant10/agent-pi.git#e4ae576546b1b304c0ab6db32b4a69a0556b5fc2
     environment:
+      PORT: "9800"
       AGENT_CONFIG: /app/apps/assistant/config/agent.json
       AGENT_INSTANCE_ID: quickstart-0
       AUTH_KIND: jwt
