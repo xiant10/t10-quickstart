@@ -127,6 +127,7 @@ services:
       WORKBENCH_PUBLIC_URL: http://127.0.0.1:28083
       WORKBENCH_SESSION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       AGENT_URLS: assistant=http://agent-pi:9800
+      MODULE_URLS: collab=http://t10-collab:8082
       LIVEKIT_URL: ws://localhost:8890
     ports:
       - "127.0.0.1:28083:8083"
