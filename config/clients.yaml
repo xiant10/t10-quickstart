@@ -3,6 +3,7 @@ clients:
     name: t10 workbench
     type: confidential
     redirect_uris:
+      - http://127.0.0.1:28083/auth/callback
       - http://127.0.0.1:18083/auth/callback
     # The hash of the dev secret in docker-compose.yml.
     secret_sha256: 3b2a1c8150447544142ed749be66a8a5cc8c4c25a0fb17e9b5e596313775cd11

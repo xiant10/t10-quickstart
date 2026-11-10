@@ -28,10 +28,10 @@ flowchart LR
 
 | Service | Role | Address |
 | --- | --- | --- |
-| `workbench` | Web client | <http://127.0.0.1:18083> |
-| `auth-server` | Users, tenants, tokens and agent grants | <http://127.0.0.1:18081> |
-| `agent-pi` | The agent loop, and the conversations | <http://127.0.0.1:19800> |
-| `t10-collab` | The agent's tools, an MCP server for tasks | <http://127.0.0.1:18082> |
+| `workbench` | Web client | <http://127.0.0.1:28083> |
+| `auth-server` | Users, tenants, tokens and agent grants | <http://127.0.0.1:28081> |
+| `agent-pi` | The agent loop, and the conversations | <http://127.0.0.1:29800> |
+| `t10-collab` | The agent's tools, an MCP server for tasks | <http://127.0.0.1:28082> |
 | Postgres | Storage for `auth-server`, `workbench` and `t10-collab` | Not published |
 
 `agent-pi` keeps conversations in SQLite on its own volume.
@@ -41,7 +41,7 @@ When the model calls a tool, `agent-pi` mints a short-lived token from a grant t
 ## Before you start
 
 - Docker with Compose 2.24.4 or later
-- Ports `18081`, `18082`, `18083` and `19800` free
+- Ports `28081`, `28082`, `28083` and `29800` free
 - An API key for an OpenAI-compatible model that supports tool calling
 
 ## Run it
@@ -72,7 +72,7 @@ docker compose up -d --build --wait
 
 The one-shot `seed` service exits after creating the sample user, which is expected.
 
-Open <http://127.0.0.1:18083>, using `127.0.0.1` rather than `localhost`, and sign in:
+Open <http://127.0.0.1:28083>, using `127.0.0.1` rather than `localhost`, and sign in:
 
 | | |
 | --- | --- |
@@ -145,7 +145,7 @@ docker compose down -v     # Deletes everything
 | Symptom | Cause |
 | --- | --- |
 | `copy .env.example to .env and set it` | `.env` is missing, or a value in it is empty |
-| Sign-in fails with a redirect error | Open `http://127.0.0.1:18083`, not `localhost` |
+| Sign-in fails with a redirect error | Open `http://127.0.0.1:28083`, not `localhost` |
 | `port is already allocated` | Something else holds one of the ports. For `check.sh`, stop your own stack first |
 | The reply never arrives | Check `docker compose logs agent-pi` for an error from your provider |
 | The agent says it did something, but no row appears | The model didn't call a tool. Try a stronger model |

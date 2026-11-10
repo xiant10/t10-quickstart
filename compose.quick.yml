@@ -6,10 +6,10 @@
 #   docker compose -f compose.quick.yml up -d --wait
 #
 # Access:
-#   Workbench Web UI : http://127.0.0.1:18083
-#   Auth Server      : http://127.0.0.1:18081
-#   Collab MCP       : http://127.0.0.1:18082
-#   Agent-Pi         : http://127.0.0.1:19800
+#   Workbench Web UI : http://127.0.0.1:28083
+#   Auth Server      : http://127.0.0.1:28081
+#   Collab MCP       : http://127.0.0.1:28082
+#   Agent-Pi         : http://127.0.0.1:29800
 #
 # Default test user:
 #   ada@acme.example / change-me-enterprise-admin
@@ -51,8 +51,8 @@ services:
     image: ghcr.io/xiant10/auth-server:latest
     environment:
       AUTH_DEV_MODE: "true"
-      AUTH_PUBLIC_URL: http://localhost:18081
-      AUTH_WORKBENCH_URL: http://127.0.0.1:18083
+      AUTH_PUBLIC_URL: http://localhost:28081
+      AUTH_WORKBENCH_URL: http://127.0.0.1:28083
       AUTH_TOTP_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/auth?sslmode=disable
       LIVEKIT_URL: ws://localhost:8890
@@ -61,7 +61,7 @@ services:
     volumes:
       - ./config/clients.yaml:/etc/t10-auth/clients.yaml:ro
     ports:
-      - "127.0.0.1:18081:8081"
+      - "127.0.0.1:28081:8081"
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8081/readyz"]
       interval: 5s
@@ -75,11 +75,11 @@ services:
     image: ghcr.io/xiant10/t10-collab:latest
     environment:
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/collab?sslmode=disable
-      AUTH_ISSUER: http://localhost:18081
+      AUTH_ISSUER: http://localhost:28081
       AUTH_URL: http://auth-server:8081
       AUTH_CLIENT_SECRET: dev-only-t10-collab-service-secret-change-me
     ports:
-      - "127.0.0.1:18082:8082"
+      - "127.0.0.1:28082:8082"
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8082/readyz"]
       interval: 5s
@@ -97,7 +97,7 @@ services:
       AGENT_INSTANCE_ID: quickstart-0
       AUTH_KIND: jwt
       JWT_JWKS_URL: http://auth-server:8081/.well-known/jwks.json
-      JWT_ISSUER: http://localhost:18081
+      JWT_ISSUER: http://localhost:28081
       JWT_AUDIENCE: t10,agent-pi
       JWT_TENANT_CLAIM: tid
       AUTH_URL: http://auth-server:8081
@@ -117,7 +117,7 @@ services:
     extra_hosts:
       - host.docker.internal:host-gateway
     ports:
-      - "127.0.0.1:19800:9800"
+      - "127.0.0.1:29800:9800"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:9800/readyz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
       interval: 5s
@@ -131,15 +131,15 @@ services:
     image: ghcr.io/xiant10/workbench:latest
     environment:
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/workbench?sslmode=disable
-      AUTH_PUBLIC_URL: http://localhost:18081
+      AUTH_PUBLIC_URL: http://localhost:28081
       AUTH_URL: http://auth-server:8081
       AUTH_CLIENT_SECRET: dev-only-t10-workbench-client-secret-change-me
-      WORKBENCH_PUBLIC_URL: http://127.0.0.1:18083
+      WORKBENCH_PUBLIC_URL: http://127.0.0.1:28083
       WORKBENCH_SESSION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       AGENT_URLS: assistant=http://agent-pi:9800
       LIVEKIT_URL: ws://localhost:8890
     ports:
-      - "127.0.0.1:18083:8083"
+      - "127.0.0.1:28083:8083"
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8083/readyz"]
       interval: 5s

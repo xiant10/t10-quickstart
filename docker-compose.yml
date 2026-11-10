@@ -42,9 +42,9 @@ services:
     build: *auth-server
     environment:
       AUTH_DEV_MODE: "true"
-      AUTH_PUBLIC_URL: http://localhost:18081
+      AUTH_PUBLIC_URL: http://localhost:28081
       # Where auth-server's /admin sends a tenant admin.
-      AUTH_WORKBENCH_URL: http://127.0.0.1:18083
+      AUTH_WORKBENCH_URL: http://127.0.0.1:28083
       AUTH_TOTP_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/auth?sslmode=disable
       # Required by the server. Calls aren't part of this stack.
@@ -54,7 +54,7 @@ services:
     volumes:
       - ./config/clients.yaml:/etc/t10-auth/clients.yaml:ro
     ports:
-      - "127.0.0.1:18081:8081"
+      - "127.0.0.1:28081:8081"
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8081/readyz"]
       interval: 5s
@@ -68,11 +68,11 @@ services:
     build: https://github.com/xiant10/t10-collab.git#cb5f3e8a5fe3b5d5f5337299e120e76a7934b58f
     environment:
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/collab?sslmode=disable
-      AUTH_ISSUER: http://localhost:18081
+      AUTH_ISSUER: http://localhost:28081
       AUTH_URL: http://auth-server:8081
       AUTH_CLIENT_SECRET: dev-only-t10-collab-service-secret-change-me
     ports:
-      - "127.0.0.1:18082:8082"
+      - "127.0.0.1:28082:8082"
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8082/readyz"]
       interval: 5s
@@ -90,7 +90,7 @@ services:
       AGENT_INSTANCE_ID: quickstart-0
       AUTH_KIND: jwt
       JWT_JWKS_URL: http://auth-server:8081/.well-known/jwks.json
-      JWT_ISSUER: http://localhost:18081
+      JWT_ISSUER: http://localhost:28081
       JWT_AUDIENCE: t10,agent-pi
       JWT_TENANT_CLAIM: tid
       # Grants let a run call tools as the person who asked.
@@ -112,7 +112,7 @@ services:
     extra_hosts:
       - host.docker.internal:host-gateway
     ports:
-      - "127.0.0.1:19800:9800"
+      - "127.0.0.1:29800:9800"
     depends_on:
       t10-collab:
         condition: service_healthy
@@ -121,15 +121,15 @@ services:
     build: https://github.com/xiant10/workbench.git#3feb8e06beaf2ee3c722fe4c3dd21a1e31c0047d
     environment:
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/workbench?sslmode=disable
-      AUTH_PUBLIC_URL: http://localhost:18081
+      AUTH_PUBLIC_URL: http://localhost:28081
       AUTH_URL: http://auth-server:8081
       AUTH_CLIENT_SECRET: dev-only-t10-workbench-client-secret-change-me
-      WORKBENCH_PUBLIC_URL: http://127.0.0.1:18083
+      WORKBENCH_PUBLIC_URL: http://127.0.0.1:28083
       WORKBENCH_SESSION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       AGENT_URLS: assistant=http://agent-pi:9800
       LIVEKIT_URL: ws://localhost:8890
     ports:
-      - "127.0.0.1:18083:8083"
+      - "127.0.0.1:28083:8083"
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8083/readyz"]
       interval: 5s
