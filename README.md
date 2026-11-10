@@ -1,10 +1,18 @@
-# t10 quickstart
+# t10 Quickstart
 
-Run a small multi-user agent platform on your machine with Docker. You sign in to a web client and ask an agent to do something. It calls real tools as you, and the results are stored in a real service.
+Run a small multi-user t10 agent platform locally with Docker Compose.
 
-This repo holds only the instructions and the Compose file. Each service builds from its own repo, at a pinned commit. Every service in it is open source under the Apache License 2.0.
+## Project Description
 
-> **Local use only.** This stack runs in dev mode with secrets that are published in this repo. Its ports are bound to `127.0.0.1`. Don't expose them to a network.
+**t10 Quickstart** provides a lightweight, pre-configured local deployment profile to run the entire t10 agent platform on a single development machine. With a single Docker Compose command, developers can launch the Workbench web client, Auth Server, Collab service, and AI Agent harness, sign in as test accounts, and interact with live AI agents using real tools and storage.
+
+### Included Services
+
+- **`workbench`**: Web client and application proxy (`:8083`).
+- **`auth-server`**: Multi-tenant identity, accounts, and JWT issuer (`:8081`).
+- **`t10-collab`**: Multi-tenant task and work item coordination service (`:8082`).
+- **`agent-pi` / `agent-ti`**: Conversational AI agent runtime harnesses.
+- **PostgreSQL & LiveKit**: Dedicated database persistence and WebRTC media server.
 
 ## What runs
 
