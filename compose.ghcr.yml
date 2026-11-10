@@ -1,0 +1,13 @@
+# Use pre-built Docker images from GitHub Container Registry (ghcr.io)
+# Run with: docker compose -f docker-compose.yml -f compose.ghcr.yml up -d --wait
+services:
+  seed:
+    image: ghcr.io/xiant10/auth-server:latest
+  auth-server:
+    image: ghcr.io/xiant10/auth-server:latest
+  t10-collab:
+    image: ghcr.io/xiant10/t10-collab:latest
+  agent-pi:
+    image: ghcr.io/xiant10/agent-pi:latest
+  workbench:
+    image: ghcr.io/xiant10/workbench:latest

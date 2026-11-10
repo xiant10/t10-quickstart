@@ -52,7 +52,15 @@ cd t10-quickstart
 cp .env.example .env
 ```
 
-Set your provider in `.env`, then start the stack. The first build takes a few minutes.
+Set your provider in `.env`, then start the stack.
+
+### Option A: Using pre-built images from GHCR (Fastest)
+
+```sh
+docker compose -f docker-compose.yml -f compose.ghcr.yml up -d --wait
+```
+
+### Option B: Building from source
 
 ```sh
 docker compose up -d --build --wait
