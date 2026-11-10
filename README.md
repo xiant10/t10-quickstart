@@ -52,32 +52,90 @@ cd t10-quickstart
 cp .env.example .env
 ```
 
-Set your provider in `.env`, then start the stack.
-
-### Option A: One-command Quickstart with pre-built GHCR images (Fastest)
-
-Runs the entire stack in seconds using official multi-arch images from GitHub Container Registry (`ghcr.io`):
+Set your model provider credentials in `.env`, then start the stack:
 
 ```sh
-docker compose -f compose.quick.yml up -d --wait
+docker compose up -d --wait
 ```
 
-*(Or `docker compose -f docker-compose.quick.yml up -d --wait`)*
+By default, Docker Compose loads `compose.yml`, which pulls pre-built multi-architecture images from GitHub Container Registry (`ghcr.io`), boots in seconds, and seeds the default admin account.
 
-### Option B: Building from source
+*(To build all images locally from source instead, run `docker compose -f docker-compose.yml up -d --build --wait`)*
+
+The one-shot `seed` service exits after creating the sample tenant and administrator, which is expected.
+
+---
+
+## Default User Logins & Authentication
+
+### 1. Primary Default Administrator
+
+When the stack starts, the `seed` container initializes PostgreSQL and creates the default platform and tenant administrator:
+
+| Field | Value | Notes |
+| :--- | :--- | :--- |
+| **Workbench Web URL** | <http://127.0.0.1:28083> | Use `127.0.0.1`, not `localhost` |
+| **Auth Server URL** | <http://127.0.0.1:28081> | Identity & token minting service |
+| **Username / Email** | `ada@acme.example` | Default bootstrap administrator |
+| **Password** | `change-me-enterprise-admin` | Configured via `AUTHCTL_PASSWORD` |
+| **Tenant ID** | `ten_acme` | Display name: `Acme` |
+| **Assigned Roles** | **Platform Admin** & **Tenant Admin** | Unrestricted access to all features |
+
+Open <http://127.0.0.1:28083> in your browser to sign in.
+
+### 2. Signing In via API / CLI
+
+To mint an OAuth2 Bearer token directly for scripts, testing, or CLI tools:
 
 ```sh
-docker compose up -d --build --wait
+curl -fsS http://127.0.0.1:28081/v1/token \
+  -d grant_type=password \
+  -d client_id=t10-mac-client \
+  -d username=ada@acme.example \
+  -d password=change-me-enterprise-admin \
+  -d tenant=ten_acme
 ```
 
-The one-shot `seed` service exits after creating the sample user, which is expected.
+### 3. Adding New Users
 
-Open <http://127.0.0.1:28083>, using `127.0.0.1` rather than `localhost`, and sign in:
+#### Option A: Through the Workbench Web UI
+1. Sign in as `ada@acme.example` at <http://127.0.0.1:28083>.
+2. Click **Administration** in the left sidebar.
+3. Under **People & Teams**, click **Add user** / **Invite member**.
+4. Choose their role (`Member`, `Admin`) and set their sign-in credentials.
 
-| | |
-| --- | --- |
-| Username / Email | `ada@acme.example` |
-| Password | `change-me-enterprise-admin` |
+#### Option B: Through the CLI (`authctl add-user`)
+Create a new user directly in PostgreSQL using `authctl`:
+
+```sh
+docker compose exec auth-server authctl add-user \
+  --username="bob@acme.example" \
+  --tenant-id="ten_acme" \
+  --role="member"
+```
+*(You will be prompted for their password, or set `AUTHCTL_PASSWORD`)*
+
+#### Option C: Pre-populated Multi-Role Sample Accounts
+To populate sample accounts across multiple tenants to test different permission levels:
+
+```sh
+docker compose exec auth-server authctl samples-add
+```
+
+This creates the following accounts (all share password: `t10-sample-password`):
+
+| Username | Role & Scope | Password |
+| :--- | :--- | :--- |
+| `sample-platform` | Platform Admin (access across all tenants) | `t10-sample-password` |
+| `sample-acme-admin` | Tenant Admin of `Sample Acme` (`ten_sample-acme`) | `t10-sample-password` |
+| `sample-globex-admin` | Tenant Admin of `Sample Globex` (`ten_sample-globex`) | `t10-sample-password` |
+| `sample-member` | Regular Member in `Sample Acme` (no admin rights) | `t10-sample-password` |
+| `sample-multi` | Member of both `Sample Acme` and `Sample Globex` | `t10-sample-password` |
+
+To remove sample accounts when finished:
+```sh
+docker compose exec auth-server authctl samples-remove
+```
 
 ## Things to try
 
