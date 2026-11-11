@@ -1,0 +1,437 @@
+# Comprehensive Quickstart Compose file for t10 with ALL platform components.
+# Runs pre-built multi-arch images from GitHub Container Registry (ghcr.io).
+#
+# Usage:
+#   docker compose -f compose.all.yml up -d --wait
+#
+# Access:
+#   Workbench Web UI : http://127.0.0.1:28083
+#   Console Web UI   : http://127.0.0.1:28020
+#   Auth Server      : http://127.0.0.1:28081
+#   Collab MCP       : http://127.0.0.1:28082
+#   Knowledge MCP    : http://127.0.0.1:28050
+#   Property Module  : http://127.0.0.1:28075
+#   Automations      : http://127.0.0.1:28030
+#   Agent Control    : http://127.0.0.1:28085
+#   Agent-Pi         : http://127.0.0.1:29800
+#   Agent-Sales      : http://127.0.0.1:29810
+#   Agent-Ti         : http://127.0.0.1:28130
+#   AI Gateway LLM   : http://127.0.0.1:27200
+#   AI Gateway Agent : http://127.0.0.1:27201
+#   LiveKit WebRTC   : ws://127.0.0.1:8890
+#
+# Default test user:
+#   ada@acme.example / change-me-enterprise-admin
+name: t10-all
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: t10
+      POSTGRES_PASSWORD: quickstart-dev-password
+      POSTGRES_DB: auth
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U t10 -d auth"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - ./config/init-all-db.sql:/docker-entrypoint-initdb.d/init-all-db.sql:ro
+      - postgres-data:/var/lib/postgresql/data
+
+  livekit-server:
+    image: livekit/livekit-server:latest
+    command: --dev --bind 0.0.0.0 --node-ip=127.0.0.1
+    restart: unless-stopped
+    environment:
+      LIVEKIT_KEYS: "devkey: change-me-to-a-32-plus-character-secret"
+      LIVEKIT_CONFIG: "rtc: {tcp_port: 8891, udp_port: 8892}"
+    ports:
+      - "8890:7880"
+      - "8891:8891"
+      - "8892:8892/udp"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7880 || exit 0"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  seed:
+    image: ghcr.io/xiant10/auth-server:latest
+    entrypoint: ["auth-setup"]
+    environment:
+      DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/auth?sslmode=disable
+      AUTHCTL_PASSWORD: change-me-enterprise-admin
+      AUTH_SETUP_ADMIN: ada@acme.example
+      AUTH_SETUP_TENANT_ID: ten_acme
+      AUTH_SETUP_TENANT_NAME: Acme
+      AGENT_PI_SECRET: dev-only-agent-pi-service-secret-change-me
+      AGENT_SALES_SECRET: dev-only-agent-sales-service-secret-change-me
+      AGENT_TI_SECRET: dev-only-agent-ti-service-secret-change-me
+      AGENT_TI_PROPERTY_SECRET: dev-only-agent-ti-property-service-secret-change-me
+      T10_COLLAB_SECRET: dev-only-t10-collab-service-secret-change-me
+      T10_KNOWLEDGE_SECRET: dev-only-t10-knowledge-service-secret-change-me
+      T10_PROPERTY_SECRET: dev-only-t10-property-service-secret-change-me
+      AI_GATEWAY_SECRET: dev-only-ai-gateway-service-secret-change-me
+      AI_GATEWAY_TOOLS_SECRET: dev-only-ai-gateway-tools-service-secret-change-me
+      AI_GATEWAY_LLM_SECRET: dev-only-ai-gateway-llm-service-secret-change-me
+      T10_AUTOMATIONS_SECRET: dev-only-t10-automations-service-secret-change-me
+      LIVEKIT_AGENT_SECRET: dev-only-t10-livekit-agent-secret-change-me
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  auth-server:
+    image: ghcr.io/xiant10/auth-server:latest
+    environment:
+      AUTH_DEV_MODE: "true"
+      AUTH_PUBLIC_URL: http://localhost:28081
+      AUTH_WORKBENCH_URL: http://127.0.0.1:28083
+      AUTH_CONSOLE_URL: http://127.0.0.1:28020
+      AUTH_APP_URLS: property=http://127.0.0.1:28075
+      AUTH_TOTP_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/auth?sslmode=disable
+      LIVEKIT_URL: ws://livekit-server:7880
+      LIVEKIT_API_KEY: devkey
+      LIVEKIT_API_SECRET: change-me-to-a-32-plus-character-secret
+    volumes:
+      - ./config/clients.all.yaml:/etc/t10-auth/clients.yaml:ro
+    ports:
+      - "127.0.0.1:28081:8081"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8081/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+
+  t10-agent-control:
+    image: ghcr.io/xiant10/t10-agent-control:latest
+    environment:
+      AGENT_CONTROL_LISTEN_ADDR: ":8085"
+      DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/agent_control?sslmode=disable
+      AUTH_ISSUER: http://localhost:28081
+      AUTH_URL: http://auth-server:8081
+      WORKBENCH_URL: http://127.0.0.1:28083
+      MODEL_GATEWAY_URL: http://ai-gateway-llm:7200
+      MODEL_GATEWAY_KEY: dev-gateway-api-key
+    ports:
+      - "127.0.0.1:28085:8085"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8085/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      auth-server:
+        condition: service_healthy
+
+  ai-gateway-llm:
+    image: ghcr.io/xiant10/ai-gateway:latest
+    command: ["-config", "/app/config.yaml"]
+    environment:
+      OPENAI_BASE_URL: "${LLM_BASE_URL:-https://api.openai.com/v1}"
+      OPENAI_API_KEY: "${LLM_API_KEY:-dev-dummy-key}"
+      GATEWAY_DEFAULT_API_KEY: dev-gateway-api-key
+      AUTH_ISSUER: http://localhost:28081
+      AUTH_URL: http://auth-server:8081
+      AI_GATEWAY_LLM_CLIENT_SECRET: dev-only-ai-gateway-llm-service-secret-change-me
+      AGENT_CONTROL_URL: http://t10-agent-control:8085
+    ports:
+      - "127.0.0.1:27200:7200"
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://127.0.0.1:7200/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      t10-agent-control:
+        condition: service_healthy
+
+  ai-gateway-agent:
+    image: ghcr.io/xiant10/ai-gateway:latest
+    command: ["-config", "/app/config.agent.yaml"]
+    environment:
+      AGENT_URLS: assistant.quickstart-0=http://agent-pi:9800,sales.sales-quickstart-0=http://agent-sales:9810,ti.agent-ti-0=http://agent-ti:18120/agents/ti/agent
+      AUTH_ISSUER: http://localhost:28081
+      AUTH_URL: http://auth-server:8081
+      AI_GATEWAY_CLIENT_SECRET: dev-only-ai-gateway-service-secret-change-me
+      AI_GATEWAY_LLM_URL: http://ai-gateway-llm:7200
+      AI_GATEWAY_LLM_API_KEY: dev-gateway-api-key
+      AGENT_CONTROL_URL: http://t10-agent-control:8085
+    ports:
+      - "127.0.0.1:27201:18090"
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://127.0.0.1:18090/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      ai-gateway-llm:
+        condition: service_healthy
+
+  t10-automations:
+    image: ghcr.io/xiant10/t10-automations:latest
+    environment:
+      AUTOMATIONS_LISTEN_ADDR: ":18030"
+      DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/automations?sslmode=disable
+      AUTH_ISSUER: http://localhost:28081
+      AUTH_URL: http://auth-server:8081
+      AUTH_CLIENT_SECRET: dev-only-t10-automations-service-secret-change-me
+      AGENT_URL: http://ai-gateway-agent:18090/agent
+      AGENT_CONTROL_URL: http://t10-agent-control:8085
+    ports:
+      - "127.0.0.1:28030:18030"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:18030/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      t10-agent-control:
+        condition: service_healthy
+
+  t10-collab:
+    image: ghcr.io/xiant10/t10-collab:latest
+    environment:
+      DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/collab?sslmode=disable
+      AUTH_ISSUER: http://localhost:28081
+      AUTH_URL: http://auth-server:8081
+      AUTH_CLIENT_SECRET: dev-only-t10-collab-service-secret-change-me
+      AUTOMATIONS_URL: http://t10-automations:18030
+    ports:
+      - "127.0.0.1:28082:8082"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8082/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      auth-server:
+        condition: service_healthy
+
+  t10-knowledge:
+    image: ghcr.io/xiant10/t10-knowledge:latest
+    environment:
+      DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/knowledge?sslmode=disable
+      AUTH_ISSUER: http://localhost:28081
+      AUTH_URL: http://auth-server:8081
+      AUTH_CLIENT_SECRET: dev-only-t10-knowledge-service-secret-change-me
+      LISTEN_ADDR: ":18050"
+      AGENT_CONTROL_URL: http://t10-agent-control:8085
+    ports:
+      - "127.0.0.1:28050:18050"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:18050/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      t10-agent-control:
+        condition: service_healthy
+
+  t10-property:
+    image: ghcr.io/xiant10/t10-property:latest
+    environment:
+      DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/property?sslmode=disable
+      LISTEN_ADDR: ":18075"
+      AUTH_ISSUER: http://localhost:28081
+      AUTH_URL: http://auth-server:8081
+      AUTH_CLIENT_SECRET: dev-only-t10-property-service-secret-change-me
+      PROPERTY_PUBLIC_URL: http://127.0.0.1:28075
+      AI_WITHOUT_CONSENT: "true"
+      AGENT_URL: http://agent-ti:18120/agents/property/agent
+    ports:
+      - "127.0.0.1:28075:18075"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:18075/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      auth-server:
+        condition: service_healthy
+
+  agent-pi:
+    image: ghcr.io/xiant10/agent-pi:latest
+    environment:
+      PORT: "9800"
+      AGENT_CONFIG: /app/apps/assistant/config/agent.json
+      AGENT_INSTANCE_ID: quickstart-0
+      AUTH_KIND: jwt
+      JWT_JWKS_URL: http://auth-server:8081/.well-known/jwks.json
+      JWT_ISSUER: http://localhost:28081
+      JWT_AUDIENCE: t10,agent-pi
+      JWT_TENANT_CLAIM: tid
+      AUTH_URL: http://auth-server:8081
+      AUTH_CLIENT_ID: agent-pi
+      AUTH_CLIENT_SECRET: dev-only-agent-pi-service-secret-change-me
+      GRANT_ACTIONS: agent:use,work:read,work:write,knowledge:read,property:read,property:propose
+      GRANT_AUDIENCES: agent-pi,t10-collab,t10-knowledge,t10-property,ai-gateway-llm
+      COLLAB_MCP_URL: http://t10-collab:8082/mcp
+      LLM_IDENTITY_HEADERS: none
+      LLM_BASE_URL: http://ai-gateway-llm:7200/v1
+      LLM_API_KEY: dev-gateway-api-key
+      LLM_API: "${LLM_API:-chat-completions}"
+      FAST_MODEL_ID: "${FAST_MODEL_ID:-gpt-4o-mini}"
+      SMART_MODEL_ID: "${SMART_MODEL_ID:-gpt-4o}"
+      AGENT_CONTROL_URL: http://t10-agent-control:8085
+    volumes:
+      - agent-data:/data
+    ports:
+      - "127.0.0.1:29800:9800"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:9800/readyz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      t10-collab:
+        condition: service_healthy
+      ai-gateway-llm:
+        condition: service_healthy
+
+  agent-sales:
+    image: ghcr.io/xiant10/agent-sales:latest
+    command: ["node", "--disable-warning=ExperimentalWarning", "apps/sales/src/main.ts"]
+    environment:
+      PORT: "9810"
+      AGENT_DATA_DIR: /data
+      AGENT_INSTANCE_ID: sales-quickstart-0
+      JWT_JWKS_URL: http://auth-server:8081/.well-known/jwks.json
+      JWT_ISSUER: http://localhost:28081
+      JWT_AUDIENCE: t10,agent-sales
+      JWT_TENANT_CLAIM: tid
+      AUTH_URL: http://auth-server:8081
+      AUTH_CLIENT_ID: agent-sales
+      AUTH_CLIENT_SECRET: dev-only-agent-sales-service-secret-change-me
+      GRANT_ACTIONS: agent:use,work:read,work:write,knowledge:read
+      GRANT_AUDIENCES: agent-sales,t10-collab,t10-knowledge,ai-gateway-llm
+      LLM_BASE_URL: http://ai-gateway-llm:7200/v1
+      LLM_API_KEY: dev-gateway-api-key
+      AGENT_CONTROL_URL: http://t10-agent-control:8085
+      DATA_MCP_TENANTS: "*"
+    volumes:
+      - sales-data:/data
+    ports:
+      - "127.0.0.1:29810:9810"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:9810/readyz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      t10-collab:
+        condition: service_healthy
+      ai-gateway-llm:
+        condition: service_healthy
+
+  t10-agents:
+    image: ghcr.io/xiant10/t10-agents:latest
+    volumes:
+      - agents-volume:/target
+
+  agent-ti:
+    image: ghcr.io/xiant10/agent-ti:latest
+    environment:
+      DEFAULT_AGENT: ti
+      AGENT_INSTANCE_ID: agent-ti-0
+      AUTH_ISSUER: http://localhost:28081
+      AUTH_URL: http://auth-server:8081
+      JWT_JWKS_URL: http://auth-server:8081/.well-known/jwks.json
+      AGENT_CONTROL_URL: http://t10-agent-control:8085
+      LLM_BASE_URL: http://ai-gateway-llm:7200/v1
+      LLM_API_KEY: dev-gateway-api-key
+      AUTH_CLIENT_ID: agent-ti
+      AUTH_CLIENT_SECRET: dev-only-agent-ti-service-secret-change-me
+    volumes:
+      - agents-volume:/etc/agent-ti/agents:ro
+      - agent-ti-data:/data
+    ports:
+      - "127.0.0.1:28130:18120"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:18120/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      t10-agents:
+        condition: service_completed_successfully
+      ai-gateway-llm:
+        condition: service_healthy
+
+  t10-livekit-agent:
+    image: ghcr.io/xiant10/t10-livekit-agent:latest
+    environment:
+      LIVEKIT_URL: ws://livekit-server:7880
+      LIVEKIT_API_KEY: devkey
+      LIVEKIT_API_SECRET: change-me-to-a-32-plus-character-secret
+      AGENT_PI_URL: http://agent-pi:9800/agent
+      AUTH_URL: http://auth-server:8081
+      AUTH_CLIENT_SECRET: dev-only-t10-livekit-agent-secret-change-me
+      AGENT_CONTROL_URL: http://t10-agent-control:8085
+    depends_on:
+      livekit-server:
+        condition: service_healthy
+      agent-pi:
+        condition: service_healthy
+
+  workbench:
+    image: ghcr.io/xiant10/workbench:latest
+    environment:
+      DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/workbench?sslmode=disable
+      AUTH_PUBLIC_URL: http://localhost:28081
+      AUTH_URL: http://auth-server:8081
+      AUTH_CLIENT_SECRET: dev-only-t10-workbench-client-secret-change-me
+      WORKBENCH_PUBLIC_URL: http://127.0.0.1:28083
+      WORKBENCH_SESSION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      AGENT_URLS: assistant=http://agent-pi:9800,sales=http://agent-sales:9810,ti=http://agent-ti:18120/agents/ti/agent
+      MODULE_URLS: collab=http://t10-collab:8082,agents=http://t10-agent-control:8085,knowledge=http://t10-knowledge:18050,property=http://t10-property:18075,automations=http://t10-automations:18030
+      LIVEKIT_URL: ws://localhost:8890
+    ports:
+      - "127.0.0.1:28083:8083"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8083/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      agent-pi:
+        condition: service_healthy
+      t10-collab:
+        condition: service_healthy
+
+  t10-console:
+    image: ghcr.io/xiant10/t10-console:latest
+    environment:
+      DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/console?sslmode=disable
+      CONSOLE_LISTEN_ADDR: ":8086"
+      AUTH_ISSUER: http://localhost:28081
+      AUTH_URL: http://auth-server:8081
+      CONSOLE_PUBLIC_URL: http://127.0.0.1:28020
+      AUTH_CLIENT_SECRET: dev-only-t10-console-service-secret-change-me
+      CONSOLE_SESSION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      AGENT_CONTROL_URL: http://t10-agent-control:8085
+      GATEWAY_AUDIT_URL: http://ai-gateway-llm:7200
+    ports:
+      - "127.0.0.1:28020:8086"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8086/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      auth-server:
+        condition: service_healthy
+      t10-agent-control:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  agent-data:
+  sales-data:
+  agents-volume:
+  agent-ti-data:

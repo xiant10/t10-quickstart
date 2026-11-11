@@ -1,0 +1,7 @@
+CREATE DATABASE workbench;
+CREATE DATABASE collab;
+CREATE DATABASE agent_control;
+CREATE DATABASE knowledge;
+CREATE DATABASE property;
+CREATE DATABASE console;
+CREATE DATABASE automations;

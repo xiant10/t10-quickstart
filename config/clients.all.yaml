@@ -1,0 +1,92 @@
+# Reviewed list of first-party OAuth clients for full t10 stack.
+clients:
+  - id: t10-mac-client
+    name: t10 for Mac
+    type: public
+    redirect_uris:
+      - http://127.0.0.1/callback
+    idle_ttl: 720h
+    absolute_ttl: 2160h
+  - id: t10-mobile
+    name: t10 mobile app
+    type: public
+    direct_login: true
+    idle_ttl: 2160h
+  - id: t10-miniprogram
+    name: 物业员工端
+    type: public
+    wechat: true
+    wechat_demo: true
+    idle_ttl: 168h
+  - id: t10-workbench
+    name: Workbench
+    type: confidential
+    tenant: required
+    redirect_uris:
+      - http://127.0.0.1:8083/auth/callback
+      - http://127.0.0.1:18060/auth/callback
+      - http://127.0.0.1:28060/auth/callback
+      - http://127.0.0.1:28083/auth/callback
+    secret_sha256: 3b2a1c8150447544142ed749be66a8a5cc8c4c25a0fb17e9b5e596313775cd11
+    idle_ttl: 12h
+    absolute_ttl: 168h
+  - id: t10-property-web
+    name: Property
+    type: confidential
+    tenant: required
+    redirect_uris:
+      - http://127.0.0.1:18075/auth/callback
+      - http://127.0.0.1:28075/auth/callback
+    secret_sha256: 989c446dbbbd589c7365d8a21f8ba12bc20d4e76b42efe92eadfae4056755826
+    idle_ttl: 12h
+    absolute_ttl: 168h
+  - id: t10-console
+    name: Platform console
+    type: confidential
+    tenant: none
+    redirect_uris:
+      - http://127.0.0.1:8086/auth/callback
+      - http://127.0.0.1:18020/auth/callback
+      - http://127.0.0.1:18086/auth/callback
+      - http://127.0.0.1:28020/auth/callback
+    secret_sha256: 9563997683bc03b226cf8fff630944ac87aa2dfa0699a2a2025677582821359c
+    idle_ttl: 1h
+    absolute_ttl: 12h
+
+runtimes:
+  - name: t10-livekit-agent
+    voice: true
+    actions: [agent:use, work:read, work:write, knowledge:read, property:read, property:propose]
+    audiences: [agent-pi, agent-sales, agent-ti, t10-collab, t10-knowledge, t10-property, ai-gateway-tools, ai-gateway-llm]
+  - name: agent-pi
+    actions: [agent:use, work:read, work:write, knowledge:read, property:read, property:propose]
+    audiences: [agent-pi, t10-collab, t10-knowledge, t10-property, ai-gateway-tools, ai-gateway-llm]
+    tool_audience: ai-gateway-tools
+    model_audience: ai-gateway-llm
+  - name: agent-sales
+    actions: [agent:use, work:read, work:write, knowledge:read]
+    audiences: [agent-sales, t10-collab, t10-knowledge, ai-gateway-tools, ai-gateway-llm]
+    tool_audience: ai-gateway-tools
+    model_audience: ai-gateway-llm
+  - name: agent-ti
+    optional: true
+    actions: [agent:use, work:read, work:write, work:send, knowledge:read, property:read, property:propose]
+    audiences: [agent-ti, t10-collab, t10-knowledge, t10-property, ai-gateway-tools, ai-gateway-llm]
+    tool_audience: ai-gateway-tools
+    model_audience: ai-gateway-llm
+  - name: agent-ti-property
+    optional: true
+    actions: [agent:use, knowledge:read, property:read, property:propose]
+    audiences: [agent-ti-property, t10-knowledge, t10-property, ai-gateway-tools, ai-gateway-llm]
+    tool_audience: ai-gateway-tools
+    model_audience: ai-gateway-llm
+  - name: t10-property
+    optional: true
+    actions: [agent:use, knowledge:read, property:read, property:propose]
+    audiences: [ai-gateway, agent-ti, agent-ti-property, t10-knowledge, t10-property, ai-gateway-tools, ai-gateway-llm]
+  - name: t10-automations
+    optional: true
+    actions: [agent:use, work:read, work:write, work:send, knowledge:read, property:read, property:propose]
+    audiences: [ai-gateway, agent-pi, agent-sales, agent-ti, t10-collab, t10-knowledge, t10-property, ai-gateway-tools, ai-gateway-llm]
+
+exchangers: [ai-gateway-tools]

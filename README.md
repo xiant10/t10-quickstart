@@ -62,6 +62,8 @@ By default, Docker Compose loads `compose.yml`, which pulls pre-built multi-arch
 
 *(To build all images locally from source instead, run `docker compose -f docker-compose.yml up -d --build --wait`)*
 
+*(To run all platform components including all modules, gateways, and agent harnesses, run `docker compose -f compose.all.yml up -d --wait`)*
+
 The one-shot `seed` service exits after creating the sample tenant and administrator, which is expected.
 
 ---
