@@ -133,12 +133,16 @@ services:
     environment:
       OPENAI_BASE_URL: "${LLM_BASE_URL:-https://api.openai.com/v1}"
       OPENAI_API_KEY: "${LLM_API_KEY:-dev-dummy-key}"
+      SMART_MODEL_NAME: "${SMART_MODEL_NAME:-qwen-flash}"
+      FAST_MODEL_NAME: "${FAST_MODEL_NAME:-qwen-flash}"
       GATEWAY_DEFAULT_API_KEY: dev-gateway-api-key
       AUTH_ISSUER: http://localhost:28081
       AUTH_URL: http://auth-server:8081
       AI_GATEWAY_LLM_CLIENT_SECRET: dev-only-ai-gateway-llm-service-secret-change-me
       AGENT_CONTROL_URL: http://t10-agent-control:8085
       AUDIT_CONSOLE_KEY: dev-audit-key
+    volumes:
+      - ./config/ai-gateway.yaml:/app/config.yaml:ro
     ports:
       - "127.0.0.1:27200:18080"
     healthcheck:
@@ -154,7 +158,7 @@ services:
     image: ghcr.io/xiant10/ai-gateway:latest
     command: ["-config", "/app/config.agent.yaml"]
     environment:
-      AGENT_URLS: assistant.quickstart-0=http://agent-pi:9800,sales.sales-quickstart-0=http://agent-sales:9810,ti.agent-ti-0=http://agent-ti:18120/agents/ti/agent
+      AGENT_URLS: assistant.quickstart-0=http://agent-pi:9800,sales.sales-quickstart-0=http://agent-sales:9810,ti.agent-ti-0=http://agent-ti:18120/agents/ti
       AUTH_ISSUER: http://localhost:28081
       AUTH_URL: http://auth-server:8081
       AI_GATEWAY_CLIENT_SECRET: dev-only-ai-gateway-service-secret-change-me
@@ -253,8 +257,8 @@ services:
       LLM_BASE_URL: http://ai-gateway-llm:18080/v1
       LLM_API_KEY: dev-gateway-api-key
       LLM_API: "${LLM_API:-chat-completions}"
-      FAST_MODEL_ID: "${FAST_MODEL_ID:-gpt-4o-mini}"
-      SMART_MODEL_ID: "${SMART_MODEL_ID:-gpt-4o}"
+      FAST_MODEL_ID: "${FAST_MODEL_ID:-fast}"
+      SMART_MODEL_ID: "${SMART_MODEL_ID:-smart}"
       AGENT_CONTROL_URL: http://t10-agent-control:8085
     volumes:
       - agent-data:/data
@@ -287,6 +291,8 @@ services:
       AUTH_CLIENT_SECRET: dev-only-agent-sales-service-secret-change-me
       GRANT_ACTIONS: agent:use,work:read,work:write,knowledge:read
       GRANT_AUDIENCES: agent-sales,t10-collab,t10-knowledge,ai-gateway-llm
+      FAST_MODEL_ID: "${FAST_MODEL_ID:-fast}"
+      SMART_MODEL_ID: "${SMART_MODEL_ID:-smart}"
       LLM_BASE_URL: http://ai-gateway-llm:18080/v1
       LLM_API_KEY: dev-gateway-api-key
       AGENT_CONTROL_URL: http://t10-agent-control:8085
@@ -367,7 +373,7 @@ services:
       AUTH_CLIENT_SECRET: dev-only-t10-workbench-client-secret-change-me
       WORKBENCH_PUBLIC_URL: http://127.0.0.1:28083
       WORKBENCH_SESSION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
-      AGENT_URLS: assistant=http://agent-pi:9800,sales=http://agent-sales:9810,ti=http://agent-ti:18120/agents/ti/agent
+      AGENT_URLS: assistant=http://agent-pi:9800,sales=http://agent-sales:9810,ti=http://agent-ti:18120/agents/ti
       MODULE_URLS: collab=http://t10-collab:8082,agents=http://t10-agent-control:8085,knowledge=http://t10-knowledge:18050,automations=http://t10-automations:18030
       LIVEKIT_URL: ws://localhost:8890
     ports:

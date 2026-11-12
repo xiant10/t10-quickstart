@@ -1,0 +1,273 @@
+# ai-gateway-llm configuration. config.agent.yaml configures ai-gateway-agent.
+# Environment variables can be referenced as ${VAR_NAME}
+
+server:
+  role: llm
+  port: 18080
+  read_timeout: 30s
+  write_timeout: 300s
+  shutdown_timeout: 15s
+
+audit:
+  enabled: true
+  store: file
+  file_path: audit.jsonl
+  buffer_size: 1000
+  # Rolling file: rotate out to a timestamped backup once the active file
+  # reaches max_size_mb, so the payload log never grows unbounded. Backups
+  # beyond max_backups (or older than max_age_days) are deleted; set either
+  # to 0 to disable that particular cleanup rule.
+  max_size_mb: 100
+  max_backups: 10
+  max_age_days: 30
+  compress: true
+  # Rolling window used to compute the throughput figures (requests/min,
+  # tokens/sec) shown on the audit UI.
+  stats_window: 5m
+  # Prompts and replies stay in audit when store_bodies is on.
+  store_bodies: true
+  # The audit UI is reached through the platform console, which sends this key.
+  # Without it the UI isn't served.
+  console_key: "${AUDIT_CONSOLE_KEY}"
+
+providers:
+  openai:
+    base_url: "${OPENAI_BASE_URL}"
+    api_key: "${OPENAI_API_KEY}"
+    timeout: 220s
+    max_idle_conns: 50
+    idle_conn_timeout: 90s
+    null_content_to_empty: true  # DashScope requires non-null content field
+
+  openai-native-responses:
+    base_url: "${OPENAI_BASE_URL}"
+    api_key: "${OPENAI_API_KEY}"
+    timeout: 220s
+    max_idle_conns: 50
+    idle_conn_timeout: 90s
+    native_responses_api: true
+
+
+  openrouter:
+    base_url: "https://openrouter.ai/api/v1"
+    api_key: "${OPENROUTER_API_KEY}"
+    timeout: 220s
+    max_idle_conns: 50
+    idle_conn_timeout: 90s
+    native_responses_api: true
+
+  # 本地部署/SSH 隧道转发的 vLLM。默认保留 Chat 兼容路径；已验证的 Qwen
+  # 别名在 models 内单独启用原生 Responses，不影响同 provider 的 Granite。
+  # 当前 Qwen 支持完整历史与工具回合，previous_response_id 仍返回 404。
+  local-vllm:
+    base_url: "${LOCAL_VLLM_BASE_URL}"
+    api_key: "${LOCAL_VLLM_API_KEY}"
+    timeout: 220s
+    max_idle_conns: 50
+    idle_conn_timeout: 90s
+    native_responses_api: false
+
+models:
+  # Standard platform model aliases for agents (agent-pi, agent-sales, etc.)
+  smart:
+    providers: ["openai"]
+    actual_model:
+      openai: "${SMART_MODEL_NAME}"
+
+  fast:
+    providers: ["openai"]
+    actual_model:
+      openai: "${FAST_MODEL_NAME}"
+
+  gpt-4o:
+    providers: ["openai"]
+    actual_model:
+      openai: "gpt-4o"
+
+  gpt-4o-mini:
+    providers: ["openai"]
+    actual_model:
+      openai: "gpt-4o-mini"
+
+  qwen-flash:
+    providers: ["openai"]
+    actual_model:
+      openai: "qwen-flash"
+
+  your-smart-model:
+    providers: ["openai"]
+    actual_model:
+      openai: "${SMART_MODEL_NAME}"
+
+  your-fast-model:
+    providers: ["openai"]
+    actual_model:
+      openai: "${FAST_MODEL_NAME}"
+
+  # 本地部署的 Qwen3.8-27B-FP8 模型
+  codex-llm:
+    native_responses_api: true
+    providers: ["local-vllm", "openai"]
+    actual_model:
+      local-vllm: "Qwen/Qwen3.8-27B-FP8"
+      # local-vllm: "ibm-granite/granite-4.2-8b"
+      openai: "doubao-seed-2-1-turbo-260628"
+      
+
+  local-Qwen3.8-27B-FP8:
+    native_responses_api: true
+    providers: ["local-vllm"]
+    actual_model:
+      local-vllm: "Qwen/Qwen3.8-27B-FP8"
+
+  local-granite-4.2-3b:
+    providers: ["local-vllm"]
+    actual_model:
+      local-vllm: "ibm-granite/granite-4.2-3b"
+
+  # Same local-vllm endpoint as local-granite-4.2-3b above; only one of these two is
+  # actually reachable at a time -- whichever vLLM container is currently running on
+  # that port (one GPU serving slot).
+  local-granite-4.2-8b:
+    providers: ["local-vllm"]
+    actual_model:
+      local-vllm: "ibm-granite/granite-4.2-8b"
+
+
+  openrouter-llm-emma-3-4b-it:
+    providers: ["openrouter"]
+    actual_model:
+      openrouter: "google/gemma-3-4b-it"
+
+  openrouter-llm-granite-4.2-8b:
+    providers: ["openrouter"]
+    actual_model:
+      openrouter: "ibm-granite/granite-4.2-8b"
+
+  openrouter-llm-qwen3.5-9b:
+    providers: ["openrouter"]
+    actual_model:
+      openrouter: "qwen/qwen3.5-9b"
+
+  openrouter-llm-deepseek-v4.1-flash:
+    providers: ["openrouter"]
+    actual_model:
+      openrouter: "deepseek/deepseek-v4.1-flash"
+
+  # 中文说明：主智能体和附件 OCR 可独立选用 Evolving，复用现有火山接口与凭据。
+  Doubao-Seed-Evolving:
+    providers: ["openai"]
+    actual_model:
+      openai: "doubao-seed-evolving"
+
+  # 中文说明：业务侧使用不带日期的豆包 2.1 Turbo 别名，网关内部映射到方舟真实版本 ID。
+  # 大白话：服务只传 Doubao-Seed-2.1-turbo，日期版本由网关统一管理，调用方不用跟着改。
+  Doubao-Seed-2.1-turbo:
+    providers: ["openai-native-responses"]
+    actual_model:
+      openai-native-responses: "doubao-seed-2-1-turbo-260628"
+
+  # 标讯 Agent 的低时延候选模型。调用方只使用稳定别名，具体版本由网关统一维护。
+  DeepSeek-V4-Flash:
+    providers: ["openai"]
+    actual_model:
+      openai: "deepseek-v4-flash-ga-260731"
+
+  qwen3.5-plus:
+    providers: ["openai"]
+    actual_model:
+      openai: "qwen3.5-plus"
+
+  qwen3.6-plus:
+    providers: ["openai"]
+    actual_model:
+      openai: "qwen3.6-plus"
+
+  qwen3.5-flash:
+    providers: ["openai"]
+    actual_model:
+      openai: "qwen3.5-flash"
+
+  # 中文说明：上传图片和扫描文档的文字识别使用千问专用 OCR 模型，不占用通用对话模型。
+  # 大白话：普通聊天继续走 Flash，只有需要看图识字时才走这个模型。
+  qwen3.5-ocr:
+    providers: ["openai"]
+    actual_model:
+      openai: "qwen3.5-ocr"
+
+  # 中文注释：为任务编排与协同口语提取提供 Qwen 3.6 Flash 网关别名。
+  # 大白话：Agent 传入 qwen3.6-flash 时，网关知道应把请求转给同名模型。
+  qwen3.6-flash:
+    providers: ["openai"]
+    actual_model:
+      openai: "qwen3.6-flash"
+
+  qwen-turbo:
+    providers: ["openai"]
+    actual_model:
+      openai: "qwen-turbo"
+       
+
+# Services allowed to call this route. Each key is a service credential: the t10
+# tenant arrives in the X-Tenant-ID header.
+clients:
+  - name: "default"
+    api_key: "${GATEWAY_DEFAULT_API_KEY}"
+    rate_limit: 10000
+    allowed_models: ["*"]
+    injection:
+      system_prompt: ""
+      prepend_messages: []
+      append_messages: []
+  # t10-agent-control, to list providers and check tenants' keys before it
+  # stores them. Left out when the variable isn't set.
+  - name: "t10-agent-control"
+    api_key: "${AGENT_CONTROL_GATEWAY_KEY}"
+    rate_limit: 600
+    allowed_models: []
+
+stt:
+  providers:
+    dashscope:
+      ws_url: "ws://10.212.15.97:9997/ws"
+      api_key: "${DASHSCOPE_API_KEY}"
+
+tts:
+  providers:
+    dashscope:
+      ws_url: "ws://10.212.15.97:9997/ws"
+      api_key: "${DASHSCOPE_API_KEY}"
+
+# Monthly tokens per t10 tenant. 0 means no limit. Counts live in this process,
+# so each replica counts its own, and a restart starts them again.
+quota:
+  monthly_tokens: 0
+  tenants: {}
+
+# The run's delegated token, which harnesses send in X-Run-Token. With an
+# issuer, the tenant and user come from it, and X-Tenant-ID must agree with it.
+# Without one, as in Compose before it sets AUTH_ISSUER, the header is trusted.
+run_tokens:
+  auth:
+    issuer: "${AUTH_ISSUER}"
+    url: "${AUTH_URL}"
+    service: ai-gateway-llm
+    client_secret: "${AI_GATEWAY_LLM_CLIENT_SECRET}"
+  # Refuse a call that names a tenant with no token. Turn on once every harness
+  # sends one.
+  required: false
+
+# Tenants' own keys and endpoints, and keys the platform assigns them. Set one
+# of these, or neither, and every tenant runs on the keys above. See
+# t10-agent-control's docs/model-keys.md.
+model_keys:
+  # Standard: a file with policies, mappings, endpoints and credentials, whose
+  # secrets are ${ENV}, env:NAME or file:/path references. See
+  # model-keys.example.yaml.
+  file: "${MODEL_KEYS_FILE}"
+  # Full: t10-agent-control's feed, polled with run_tokens.auth's account.
+  control_url: "${AGENT_CONTROL_URL}"
+  # The last feed, and the list of strict tenants, on the volume.
+  cache: "${MODEL_KEYS_CACHE}"
+  # Endpoint hosts that may be private or plain HTTP.
+  allow_hosts: "${MODEL_ALLOW_HOSTS}"
