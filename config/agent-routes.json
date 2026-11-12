@@ -1,0 +1,101 @@
+{
+ "revision": 1,
+ "pools": {
+  "assistant": {
+   "state": "active",
+   "audience": "agent-pi",
+   "capabilities": [
+    "steer",
+    "interrupt",
+    "voice",
+    "retry",
+    "background_tasks",
+    "durable_runs"
+   ],
+   "replicas": {
+    "quickstart-0": "http://agent-pi:9800"
+   }
+  },
+  "sales": {
+   "state": "active",
+   "audience": "agent-sales",
+   "capabilities": [
+    "steer",
+    "interrupt",
+    "voice",
+    "retry",
+    "background_tasks",
+    "durable_runs"
+   ],
+   "replicas": {
+    "sales-quickstart-0": "http://agent-sales:9810"
+   }
+  },
+  "ti": {
+   "agent": "ti",
+   "state": "active",
+   "harness": "ti",
+   "audience": "agent-ti",
+   "capabilities": [
+    "durable_runs",
+    "steer",
+    "interrupt",
+    "voice",
+    "retry",
+    "background_tasks",
+    "tenant_config"
+   ],
+   "replicas": {
+    "agent-ti-0": "http://agent-ti:18120/agents/ti"
+   },
+   "tools_via_gateway": true,
+   "hosts": [
+    {
+     "agent": "property",
+     "audience": "agent-ti-property"
+    }
+   ]
+  }
+ },
+ "agents": {
+  "assistant": {
+   "title": "Assistant",
+   "open": true,
+   "routes": [
+    {
+     "pool": "assistant"
+    }
+   ]
+  },
+  "sales": {
+   "title": "Sales",
+   "routes": [
+    {
+     "pool": "sales"
+    }
+   ],
+   "open": true
+  },
+  "ti": {
+   "title": "Ti Assistant",
+   "routes": [
+    {
+     "pool": "ti"
+    }
+   ],
+   "tenant_agents": {
+    "customize": true,
+    "models": [
+     "chat"
+    ]
+   },
+   "open": true
+  },
+  "property": {
+   "title": "Property",
+   "open": true,
+   "routes": []
+  }
+ },
+ "default_agent": "assistant"
+}

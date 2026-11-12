@@ -20,7 +20,7 @@
 #   LiveKit WebRTC   : ws://127.0.0.1:8890
 #
 # Default test user:
-#   felix@acme.example / change-me-enterprise-admin
+#   felix@acme.example / change-me-enterprise-admin (platform admin and tenant admin)
 name: t10-all
 
 services:
@@ -100,7 +100,7 @@ services:
       AUTH_CONSOLE_URL: http://127.0.0.1:28020
       AUTH_TOTP_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/auth?sslmode=disable
-      LIVEKIT_URL: ws://livekit-server:7880
+      LIVEKIT_URL: ws://127.0.0.1:8890  # the browser connects to this, so the published port
       LIVEKIT_API_KEY: devkey
       LIVEKIT_API_SECRET: change-me-to-a-32-plus-character-secret
     volumes:
@@ -136,6 +136,30 @@ services:
       retries: 12
     depends_on:
       auth-server:
+        condition: service_healthy
+
+  # Publishes the first routing configuration. Until one exists, the console's
+  # Fleet page warns and the skills feed answers 403. It skips if one is live.
+  agent-routes:
+    image: ghcr.io/xiant10/t10-agent-control:latest
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        if agentctl status | grep -q '^revision [1-9]'; then
+          echo "routes already published"
+        else
+          agentctl import /routes.json --reason "quickstart routes"
+        fi
+    environment:
+      DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/agent_control?sslmode=disable
+      MODEL_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      MODEL_GATEWAY_URL: http://ai-gateway-llm:18080
+      MODEL_GATEWAY_KEY: dev-gateway-api-key
+    volumes:
+      - ./config/agent-routes.json:/routes.json:ro
+    depends_on:
+      t10-agent-control:
         condition: service_healthy
 
   ai-gateway-llm:
@@ -346,9 +370,12 @@ services:
       AUTH_CLIENT_ID: agent-ti
       AUTH_CLIENT_SECRET: dev-only-agent-ti-service-secret-change-me
       PROPERTY_AUTH_CLIENT_SECRET: dev-only-agent-ti-property-service-secret-change-me
+      GRANT_ACTIONS: agent:use,work:read,work:write,work:send,knowledge:read,property:read,property:propose
+      GRANT_AUDIENCES: agent-ti,t10-collab,t10-knowledge,t10-property,ai-gateway-llm
       COLLAB_MCP_URL: http://t10-collab:8082/mcp
-      MODULES_MCP_URL: http://127.0.0.1:18120/readyz
       KNOWLEDGE_MCP_URL: http://t10-knowledge:18050/mcp
+      MODULES_MCP_URL: ""
+      TOOL_GATEWAY_URL: ""
       CHAT_MODEL_ID: "${FAST_MODEL_ID:-fast}"
     volumes:
       - agents-volume:/etc/agent-ti/agents:ro
@@ -375,8 +402,17 @@ services:
       AGENT_PI_URL: http://agent-pi:9800/agent
       AUTH_URL: http://auth-server:8081
       AUTH_CLIENT_SECRET: dev-only-t10-livekit-agent-secret-change-me
-      AGENT_CONTROL_URL: http://t10-agent-control:8085
       DASHSCOPE_API_KEY: "${DASHSCOPE_API_KEY:-dev-dummy-dashscope-key}"
+      # Speech to text and text to speech both go through OpenAI, so no DashScope key is needed.
+      STT_PROVIDER: openai
+      TTS_PROVIDER: openai
+      # Replies come from the agents, which keep the conversation, so calls are saved with the chat.
+      LLM_PROVIDER: agent_pi
+      # No AGENT_CONTROL_URL: with it set, routes come only from control, which has none published here.
+      AGENT_URLS: assistant.quickstart-0=http://agent-pi:9800,sales.sales-quickstart-0=http://agent-sales:9810,ti.agent-ti-0=http://agent-ti:18120/agents/ti
+      # The worker passes this voice to whichever TTS is on, so it must be an OpenAI voice.
+      QWEN_TTS_VOICE: "${OPENAI_TTS_VOICE:-alloy}"
+      OPENAI_SPEECH_API_KEY: "${OPENAI_SPEECH_API_KEY:-${LLM_API_KEY:-dev-dummy-key}}"
     depends_on:
       livekit-server:
         condition: service_healthy
@@ -394,7 +430,7 @@ services:
       WORKBENCH_SESSION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       AGENT_URLS: assistant=http://agent-pi:9800,sales=http://agent-sales:9810,ti=http://agent-ti:18120/agents/ti
       MODULE_URLS: collab=http://t10-collab:8082,agents=http://t10-agent-control:8085,knowledge=http://t10-knowledge:18050,automations=http://t10-automations:18030
-      LIVEKIT_URL: ws://localhost:8890
+      LIVEKIT_URL: ws://127.0.0.1:8890
     ports:
       - "127.0.0.1:28083:8083"
     healthcheck:

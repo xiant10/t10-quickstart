@@ -94,11 +94,6 @@ models:
     actual_model:
       openai: "qwen-flash"
 
-  qwen3.5-flash:
-    providers: ["openai"]
-    actual_model:
-      openai: "${FAST_MODEL_NAME}"
-
   your-smart-model:
     providers: ["openai"]
     actual_model:
@@ -191,7 +186,7 @@ models:
   qwen3.5-flash:
     providers: ["openai"]
     actual_model:
-      openai: "qwen3.5-flash"
+      openai: "${FAST_MODEL_NAME}"
 
   # 中文说明：上传图片和扫描文档的文字识别使用千问专用 OCR 模型，不占用通用对话模型。
   # 大白话：普通聊天继续走 Flash，只有需要看图识字时才走这个模型。

@@ -29,7 +29,7 @@ services:
     environment:
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/auth?sslmode=disable
       AUTHCTL_PASSWORD: change-me-enterprise-admin
-      AUTH_SETUP_ADMIN: ada@acme.example
+      AUTH_SETUP_ADMIN: felix@acme.example
       AUTH_SETUP_TENANT_ID: ten_acme
       AUTH_SETUP_TENANT_NAME: Acme
       AGENT_PI_SECRET: dev-only-agent-pi-service-secret-change-me
@@ -105,8 +105,8 @@ services:
       LLM_BASE_URL: "${LLM_BASE_URL:?copy .env.example to .env and set it}"
       LLM_API_KEY: "${LLM_API_KEY:?copy .env.example to .env and set it}"
       LLM_API: "${LLM_API:-chat-completions}"
-      FAST_MODEL_ID: "${FAST_MODEL_ID:?copy .env.example to .env and set it}"
-      SMART_MODEL_ID: "${SMART_MODEL_ID:?copy .env.example to .env and set it}"
+      FAST_MODEL_ID: "${FAST_MODEL_ID:-gpt-4o-mini}"
+      SMART_MODEL_ID: "${SMART_MODEL_ID:-gpt-4o}"
     volumes:
       - agent-data:/data
     extra_hosts:

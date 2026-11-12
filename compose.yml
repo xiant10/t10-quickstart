@@ -1,1 +1,155 @@
-compose.quick.yml
+# Standalone Quickstart Compose file for t10.
+# Runs pre-built multi-arch images directly from GitHub Container Registry (ghcr.io).
+# No local compilation or Git cloning required.
+#
+# Usage:
+#   docker compose -f compose.quick.yml up -d --wait
+#
+# Access:
+#   Workbench Web UI : http://127.0.0.1:28083
+#   Auth Server      : http://127.0.0.1:28081
+#   Collab MCP       : http://127.0.0.1:28082
+#   Agent-Pi         : http://127.0.0.1:29800
+#
+# Default test user:
+#   felix@acme.example / change-me-enterprise-admin
+name: t10-quickstart
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: t10
+      POSTGRES_PASSWORD: quickstart-dev-password
+      POSTGRES_DB: auth
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U t10 -d auth"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - ./config/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+      - postgres-data:/var/lib/postgresql/data
+
+  # One-shot setup: creates sample user (felix@acme.example) and service accounts, then exits.
+  seed:
+    image: ghcr.io/xiant10/auth-server:latest
+    entrypoint: ["auth-setup"]
+    environment:
+      DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/auth?sslmode=disable
+      AUTHCTL_PASSWORD: change-me-enterprise-admin
+      AUTH_SETUP_ADMIN: felix@acme.example
+      AUTH_SETUP_TENANT_ID: ten_acme
+      AUTH_SETUP_TENANT_NAME: Acme
+      AGENT_PI_SECRET: dev-only-agent-pi-service-secret-change-me
+      T10_COLLAB_SECRET: dev-only-t10-collab-service-secret-change-me
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  auth-server:
+    image: ghcr.io/xiant10/auth-server:latest
+    environment:
+      AUTH_DEV_MODE: "true"
+      AUTH_PUBLIC_URL: http://localhost:28081
+      AUTH_WORKBENCH_URL: http://127.0.0.1:28083
+      AUTH_TOTP_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/auth?sslmode=disable
+      LIVEKIT_URL: ws://localhost:8890
+      LIVEKIT_API_KEY: devkey
+      LIVEKIT_API_SECRET: change-me-to-a-32-plus-character-secret
+    volumes:
+      - ./config/clients.yaml:/etc/t10-auth/clients.yaml:ro
+    ports:
+      - "127.0.0.1:28081:8081"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8081/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+
+  t10-collab:
+    image: ghcr.io/xiant10/t10-collab:latest
+    environment:
+      DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/collab?sslmode=disable
+      AUTH_ISSUER: http://localhost:28081
+      AUTH_URL: http://auth-server:8081
+      AUTH_CLIENT_SECRET: dev-only-t10-collab-service-secret-change-me
+    ports:
+      - "127.0.0.1:28082:8082"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8082/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      auth-server:
+        condition: service_healthy
+
+  agent-pi:
+    image: ghcr.io/xiant10/agent-pi:latest
+    environment:
+      PORT: "9800"
+      AGENT_CONFIG: /app/apps/assistant/config/agent.json
+      AGENT_INSTANCE_ID: quickstart-0
+      AUTH_KIND: jwt
+      JWT_JWKS_URL: http://auth-server:8081/.well-known/jwks.json
+      JWT_ISSUER: http://localhost:28081
+      JWT_AUDIENCE: t10,agent-pi
+      JWT_TENANT_CLAIM: tid
+      AUTH_URL: http://auth-server:8081
+      AUTH_CLIENT_ID: agent-pi
+      AUTH_CLIENT_SECRET: dev-only-agent-pi-service-secret-change-me
+      GRANT_ACTIONS: agent:use,work:read,work:write
+      GRANT_AUDIENCES: agent-pi,t10-collab
+      COLLAB_MCP_URL: http://t10-collab:8082/mcp
+      LLM_IDENTITY_HEADERS: none
+      LLM_BASE_URL: "${LLM_BASE_URL:-https://api.openai.com/v1}"
+      LLM_API_KEY: "${LLM_API_KEY:-dev-dummy-key}"
+      LLM_API: "${LLM_API:-chat-completions}"
+      FAST_MODEL_ID: "${FAST_MODEL_ID:-gpt-4o-mini}"
+      SMART_MODEL_ID: "${SMART_MODEL_ID:-gpt-4o}"
+    volumes:
+      - agent-data:/data
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    ports:
+      - "127.0.0.1:29800:9800"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:9800/readyz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      t10-collab:
+        condition: service_healthy
+
+  workbench:
+    image: ghcr.io/xiant10/workbench:latest
+    environment:
+      DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/workbench?sslmode=disable
+      AUTH_PUBLIC_URL: http://localhost:28081
+      AUTH_URL: http://auth-server:8081
+      AUTH_CLIENT_SECRET: dev-only-t10-workbench-client-secret-change-me
+      WORKBENCH_PUBLIC_URL: http://127.0.0.1:28083
+      WORKBENCH_SESSION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      AGENT_URLS: assistant=http://agent-pi:9800
+      MODULE_URLS: collab=http://t10-collab:8082
+      LIVEKIT_URL: ws://localhost:8890
+    ports:
+      - "127.0.0.1:28083:8083"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8083/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      agent-pi:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  agent-data:

@@ -19,7 +19,7 @@ compose up -d --build --wait --quiet-pull
 
 token=$(curl -fsS http://127.0.0.1:28081/v1/token \
 	-d grant_type=password -d client_id=t10-mac-client \
-	-d username=ada@acme.example -d password=change-me-enterprise-admin \
+	-d username=felix@acme.example -d password=change-me-enterprise-admin \
 	-d tenant=ten_acme | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
 
 rpc() { # method, params, session

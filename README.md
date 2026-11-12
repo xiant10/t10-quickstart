@@ -64,6 +64,8 @@ By default, Docker Compose loads `compose.yml`, which pulls pre-built multi-arch
 
 *(To run all platform components including all modules, gateways, and agent harnesses, run `docker compose -f compose.all.yml up -d --wait`)*
 
+> **Using `compose.all.yml`?** Add `-f compose.all.yml` to every `docker compose` command below, and note the ports it publishes are listed at the top of that file. Its agent logs `control.feed_stale … status 403` until a platform admin publishes a runtime config in the console; until then agents use their built-in skills, which is harmless.
+
 The one-shot `seed` service exits after creating the sample tenant and administrator, which is expected.
 
 ---
@@ -78,7 +80,7 @@ When the stack starts, the `seed` container initializes PostgreSQL and creates t
 | :--- | :--- | :--- |
 | **Workbench Web URL** | <http://127.0.0.1:28083> | Use `127.0.0.1`, not `localhost` |
 | **Auth Server URL** | <http://127.0.0.1:28081> | Identity & token minting service |
-| **Username / Email** | `ada@acme.example` | Default bootstrap administrator |
+| **Username / Email** | `felix@acme.example` | Default bootstrap administrator |
 | **Password** | `change-me-enterprise-admin` | Configured via `AUTHCTL_PASSWORD` |
 | **Tenant ID** | `ten_acme` | Display name: `Acme` |
 | **Assigned Roles** | **Platform Admin** & **Tenant Admin** | Unrestricted access to all features |
@@ -93,7 +95,7 @@ To mint an OAuth2 Bearer token directly for scripts, testing, or CLI tools:
 curl -fsS http://127.0.0.1:28081/v1/token \
   -d grant_type=password \
   -d client_id=t10-mac-client \
-  -d username=ada@acme.example \
+  -d username=felix@acme.example \
   -d password=change-me-enterprise-admin \
   -d tenant=ten_acme
 ```
@@ -101,7 +103,7 @@ curl -fsS http://127.0.0.1:28081/v1/token \
 ### 3. Adding New Users
 
 #### Option A: Through the Workbench Web UI
-1. Sign in as `ada@acme.example` at <http://127.0.0.1:28083>.
+1. Sign in as `felix@acme.example` at <http://127.0.0.1:28083>.
 2. Click **Administration** in the left sidebar.
 3. Under **People & Teams**, click **Add user** / **Invite member**.
 4. Choose their role (`Member`, `Admin`) and set their sign-in credentials.
