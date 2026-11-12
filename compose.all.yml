@@ -20,7 +20,7 @@
 #   LiveKit WebRTC   : ws://127.0.0.1:8890
 #
 # Default test user:
-#   ada@acme.example / change-me-enterprise-admin
+#   felix@acme.example / change-me-enterprise-admin
 name: t10-all
 
 services:
@@ -62,7 +62,7 @@ services:
     environment:
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/auth?sslmode=disable
       AUTHCTL_PASSWORD: change-me-enterprise-admin
-      AUTH_SETUP_ADMIN: ada@acme.example
+      AUTH_SETUP_ADMIN: felix@acme.example
       AUTH_SETUP_TENANT_ID: ten_acme
       AUTH_SETUP_TENANT_NAME: Acme
       AGENT_PI_SECRET: dev-only-agent-pi-service-secret-change-me
