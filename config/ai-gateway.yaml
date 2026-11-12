@@ -94,6 +94,11 @@ models:
     actual_model:
       openai: "qwen-flash"
 
+  qwen3.5-flash:
+    providers: ["openai"]
+    actual_model:
+      openai: "${FAST_MODEL_NAME}"
+
   your-smart-model:
     providers: ["openai"]
     actual_model:

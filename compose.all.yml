@@ -346,6 +346,10 @@ services:
       AUTH_CLIENT_ID: agent-ti
       AUTH_CLIENT_SECRET: dev-only-agent-ti-service-secret-change-me
       PROPERTY_AUTH_CLIENT_SECRET: dev-only-agent-ti-property-service-secret-change-me
+      COLLAB_MCP_URL: http://t10-collab:8082/mcp
+      MODULES_MCP_URL: http://127.0.0.1:18120/readyz
+      KNOWLEDGE_MCP_URL: http://t10-knowledge:18050/mcp
+      CHAT_MODEL_ID: "${FAST_MODEL_ID:-fast}"
     volumes:
       - agents-volume:/etc/agent-ti/agents:ro
       - agent-ti-data:/data
