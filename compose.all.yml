@@ -401,7 +401,7 @@ services:
       AUTH_ISSUER: http://localhost:28081
       AUTH_URL: http://auth-server:8081
       CONSOLE_PUBLIC_URL: http://127.0.0.1:28020
-      AUTH_CLIENT_SECRET: dev-only-t10-console-service-secret-change-me
+      AUTH_CLIENT_SECRET: dev-only-t10-console-client-secret-change-me
       CONSOLE_SESSION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       AGENT_CONTROL_URL: http://t10-agent-control:8085
       GATEWAY_AUDIT_URL: http://ai-gateway-llm:18080
