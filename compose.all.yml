@@ -10,7 +10,6 @@
 #   Auth Server      : http://127.0.0.1:28081
 #   Collab MCP       : http://127.0.0.1:28082
 #   Knowledge MCP    : http://127.0.0.1:28050
-#   Property Module  : http://127.0.0.1:28075
 #   Automations      : http://127.0.0.1:28030
 #   Agent Control    : http://127.0.0.1:28085
 #   Agent-Pi         : http://127.0.0.1:29800
@@ -69,10 +68,8 @@ services:
       AGENT_PI_SECRET: dev-only-agent-pi-service-secret-change-me
       AGENT_SALES_SECRET: dev-only-agent-sales-service-secret-change-me
       AGENT_TI_SECRET: dev-only-agent-ti-service-secret-change-me
-      AGENT_TI_PROPERTY_SECRET: dev-only-agent-ti-property-service-secret-change-me
       T10_COLLAB_SECRET: dev-only-t10-collab-service-secret-change-me
       T10_KNOWLEDGE_SECRET: dev-only-t10-knowledge-service-secret-change-me
-      T10_PROPERTY_SECRET: dev-only-t10-property-service-secret-change-me
       AI_GATEWAY_SECRET: dev-only-ai-gateway-service-secret-change-me
       AI_GATEWAY_TOOLS_SECRET: dev-only-ai-gateway-tools-service-secret-change-me
       AI_GATEWAY_LLM_SECRET: dev-only-ai-gateway-llm-service-secret-change-me
@@ -89,7 +86,6 @@ services:
       AUTH_PUBLIC_URL: http://localhost:28081
       AUTH_WORKBENCH_URL: http://127.0.0.1:28083
       AUTH_CONSOLE_URL: http://127.0.0.1:28020
-      AUTH_APP_URLS: property=http://127.0.0.1:28075
       AUTH_TOTP_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/auth?sslmode=disable
       LIVEKIT_URL: ws://livekit-server:7880
@@ -233,28 +229,6 @@ services:
       t10-agent-control:
         condition: service_healthy
 
-  t10-property:
-    image: ghcr.io/xiant10/t10-property:latest
-    environment:
-      DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/property?sslmode=disable
-      LISTEN_ADDR: ":18075"
-      AUTH_ISSUER: http://localhost:28081
-      AUTH_URL: http://auth-server:8081
-      AUTH_CLIENT_SECRET: dev-only-t10-property-service-secret-change-me
-      PROPERTY_PUBLIC_URL: http://127.0.0.1:28075
-      AI_WITHOUT_CONSENT: "true"
-      AGENT_URL: http://agent-ti:18120/agents/property/agent
-    ports:
-      - "127.0.0.1:28075:18075"
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:18075/readyz"]
-      interval: 5s
-      timeout: 3s
-      retries: 12
-    depends_on:
-      auth-server:
-        condition: service_healthy
-
   agent-pi:
     image: ghcr.io/xiant10/agent-pi:latest
     environment:
@@ -269,8 +243,8 @@ services:
       AUTH_URL: http://auth-server:8081
       AUTH_CLIENT_ID: agent-pi
       AUTH_CLIENT_SECRET: dev-only-agent-pi-service-secret-change-me
-      GRANT_ACTIONS: agent:use,work:read,work:write,knowledge:read,property:read,property:propose
-      GRANT_AUDIENCES: agent-pi,t10-collab,t10-knowledge,t10-property,ai-gateway-llm
+      GRANT_ACTIONS: agent:use,work:read,work:write,knowledge:read
+      GRANT_AUDIENCES: agent-pi,t10-collab,t10-knowledge,ai-gateway-llm
       COLLAB_MCP_URL: http://t10-collab:8082/mcp
       LLM_IDENTITY_HEADERS: none
       LLM_BASE_URL: http://ai-gateway-llm:7200/v1
@@ -389,7 +363,7 @@ services:
       WORKBENCH_PUBLIC_URL: http://127.0.0.1:28083
       WORKBENCH_SESSION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       AGENT_URLS: assistant=http://agent-pi:9800,sales=http://agent-sales:9810,ti=http://agent-ti:18120/agents/ti/agent
-      MODULE_URLS: collab=http://t10-collab:8082,agents=http://t10-agent-control:8085,knowledge=http://t10-knowledge:18050,property=http://t10-property:18075,automations=http://t10-automations:18030
+      MODULE_URLS: collab=http://t10-collab:8082,agents=http://t10-agent-control:8085,knowledge=http://t10-knowledge:18050,automations=http://t10-automations:18030
       LIVEKIT_URL: ws://localhost:8890
     ports:
       - "127.0.0.1:28083:8083"
