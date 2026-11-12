@@ -31,7 +31,7 @@ services:
       POSTGRES_PASSWORD: quickstart-dev-password
       POSTGRES_DB: auth
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U t10 -d auth"]
+      test: ["CMD-SHELL", "pg_isready -h localhost -U t10 -d auth"]
       interval: 2s
       timeout: 3s
       retries: 20
@@ -58,7 +58,18 @@ services:
 
   seed:
     image: ghcr.io/xiant10/auth-server:latest
-    entrypoint: ["auth-setup"]
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        for i in $$(seq 1 30); do
+          if auth-setup; then
+            exit 0
+          fi
+          echo "auth-setup waiting for postgres... ($$i/30)"
+          sleep 1
+        done
+        exit 1
     environment:
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/auth?sslmode=disable
       AUTHCTL_PASSWORD: change-me-enterprise-admin
