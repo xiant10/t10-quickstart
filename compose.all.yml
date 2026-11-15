@@ -25,6 +25,7 @@ name: t10-all
 
 services:
   postgres:
+    restart: unless-stopped
     image: postgres:17-alpine
     environment:
       POSTGRES_USER: t10
@@ -92,6 +93,7 @@ services:
         condition: service_healthy
 
   auth-server:
+    restart: unless-stopped
     image: ghcr.io/xiant10/auth-server:latest
     environment:
       AUTH_DEV_MODE: "true"
@@ -117,6 +119,7 @@ services:
         condition: service_completed_successfully
 
   t10-agent-control:
+    restart: unless-stopped
     image: ghcr.io/xiant10/t10-agent-control:latest
     environment:
       AGENT_CONTROL_LISTEN_ADDR: ":8085"
@@ -163,6 +166,7 @@ services:
         condition: service_healthy
 
   ai-gateway-llm:
+    restart: unless-stopped
     image: ghcr.io/xiant10/ai-gateway:latest
     command: ["-config", "/app/config.yaml"]
     environment:
@@ -190,6 +194,7 @@ services:
         condition: service_healthy
 
   ai-gateway-agent:
+    restart: unless-stopped
     image: ghcr.io/xiant10/ai-gateway:latest
     command: ["-config", "/app/config.agent.yaml"]
     environment:
@@ -212,6 +217,7 @@ services:
         condition: service_healthy
 
   t10-automations:
+    restart: unless-stopped
     image: ghcr.io/xiant10/t10-automations:latest
     environment:
       AUTOMATIONS_LISTEN_ADDR: ":18030"
@@ -233,6 +239,7 @@ services:
         condition: service_healthy
 
   t10-collab:
+    restart: unless-stopped
     image: ghcr.io/xiant10/t10-collab:latest
     environment:
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/collab?sslmode=disable
@@ -252,6 +259,7 @@ services:
         condition: service_healthy
 
   t10-knowledge:
+    restart: unless-stopped
     image: ghcr.io/xiant10/t10-knowledge:latest
     environment:
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/knowledge?sslmode=disable
@@ -272,6 +280,7 @@ services:
         condition: service_healthy
 
   agent-pi:
+    restart: unless-stopped
     image: ghcr.io/xiant10/agent-pi:latest
     environment:
       PORT: "9800"
@@ -311,6 +320,7 @@ services:
         condition: service_healthy
 
   agent-sales:
+    restart: unless-stopped
     image: ghcr.io/xiant10/agent-sales:latest
     command: ["node", "--disable-warning=ExperimentalWarning", "apps/sales/src/main.ts"]
     environment:
@@ -353,6 +363,7 @@ services:
       - agents-volume:/target
 
   agent-ti:
+    restart: unless-stopped
     image: ghcr.io/xiant10/agent-ti:latest
     environment:
       DEFAULT_AGENT: ti
@@ -394,6 +405,7 @@ services:
         condition: service_healthy
 
   t10-livekit-agent:
+    restart: unless-stopped
     image: ghcr.io/xiant10/t10-livekit-agent:latest
     environment:
       LIVEKIT_URL: ws://livekit-server:7880
@@ -420,6 +432,7 @@ services:
         condition: service_healthy
 
   workbench:
+    restart: unless-stopped
     image: ghcr.io/xiant10/workbench:latest
     environment:
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/workbench?sslmode=disable
@@ -445,6 +458,7 @@ services:
         condition: service_healthy
 
   t10-console:
+    restart: unless-stopped
     image: ghcr.io/xiant10/t10-console:latest
     environment:
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/console?sslmode=disable
