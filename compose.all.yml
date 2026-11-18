@@ -13,7 +13,6 @@
 #   Automations      : http://127.0.0.1:28030
 #   Agent Control    : http://127.0.0.1:28085
 #   Agent-Pi         : http://127.0.0.1:29800
-#   Agent-Sales      : http://127.0.0.1:29810
 #   Agent-Ti         : http://127.0.0.1:28130
 #   AI Gateway LLM   : http://127.0.0.1:27200
 #   AI Gateway Agent : http://127.0.0.1:27201
@@ -78,7 +77,6 @@ services:
       AUTH_SETUP_TENANT_ID: ten_acme
       AUTH_SETUP_TENANT_NAME: Acme
       AGENT_PI_SECRET: dev-only-agent-pi-service-secret-change-me
-      AGENT_SALES_SECRET: dev-only-agent-sales-service-secret-change-me
       AGENT_TI_SECRET: dev-only-agent-ti-service-secret-change-me
       AGENT_TI_PROPERTY_SECRET: dev-only-agent-ti-property-service-secret-change-me
       T10_COLLAB_SECRET: dev-only-t10-collab-service-secret-change-me
@@ -198,7 +196,7 @@ services:
     image: ghcr.io/xiant10/ai-gateway:latest
     command: ["-config", "/app/config.agent.yaml"]
     environment:
-      AGENT_URLS: assistant.quickstart-0=http://agent-pi:9800,sales.sales-quickstart-0=http://agent-sales:9810,ti.agent-ti-0=http://agent-ti:18120/agents/ti
+      AGENT_URLS: assistant.quickstart-0=http://agent-pi:9800,ti.agent-ti-0=http://agent-ti:18120/agents/ti
       AUTH_ISSUER: http://localhost:28081
       AUTH_URL: http://auth-server:8081
       AI_GATEWAY_CLIENT_SECRET: dev-only-ai-gateway-service-secret-change-me
@@ -319,44 +317,6 @@ services:
       ai-gateway-llm:
         condition: service_healthy
 
-  agent-sales:
-    restart: unless-stopped
-    image: ghcr.io/xiant10/agent-sales:latest
-    command: ["node", "--disable-warning=ExperimentalWarning", "apps/sales/src/main.ts"]
-    environment:
-      PORT: "9810"
-      AGENT_DATA_DIR: /data
-      AGENT_INSTANCE_ID: sales-quickstart-0
-      JWT_JWKS_URL: http://auth-server:8081/.well-known/jwks.json
-      JWT_ISSUER: http://localhost:28081
-      JWT_AUDIENCE: t10,agent-sales
-      JWT_TENANT_CLAIM: tid
-      AUTH_URL: http://auth-server:8081
-      AUTH_CLIENT_ID: agent-sales
-      AUTH_CLIENT_SECRET: dev-only-agent-sales-service-secret-change-me
-      GRANT_ACTIONS: agent:use,work:read,work:write,knowledge:read
-      GRANT_AUDIENCES: agent-sales,t10-collab,t10-knowledge,ai-gateway-llm
-      FAST_MODEL_ID: "${FAST_MODEL_ID:-fast}"
-      SMART_MODEL_ID: "${SMART_MODEL_ID:-smart}"
-      LLM_BASE_URL: http://ai-gateway-llm:18080/v1
-      LLM_API_KEY: dev-gateway-api-key
-      AGENT_CONTROL_URL: http://t10-agent-control:8085
-      DATA_MCP_TENANTS: "*"
-    volumes:
-      - sales-data:/data
-    ports:
-      - "127.0.0.1:29810:9810"
-    healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:9810/readyz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
-      interval: 5s
-      timeout: 3s
-      retries: 12
-    depends_on:
-      t10-collab:
-        condition: service_healthy
-      ai-gateway-llm:
-        condition: service_healthy
-
   t10-agents:
     image: ghcr.io/xiant10/t10-agents:latest
     volumes:
@@ -421,7 +381,7 @@ services:
       # Replies come from the agents, which keep the conversation, so calls are saved with the chat.
       LLM_PROVIDER: agent_pi
       # No AGENT_CONTROL_URL: with it set, routes come only from control, which has none published here.
-      AGENT_URLS: assistant.quickstart-0=http://agent-pi:9800,sales.sales-quickstart-0=http://agent-sales:9810,ti.agent-ti-0=http://agent-ti:18120/agents/ti
+      AGENT_URLS: assistant.quickstart-0=http://agent-pi:9800,ti.agent-ti-0=http://agent-ti:18120/agents/ti
       # The worker passes this voice to whichever TTS is on, so it must be an OpenAI voice.
       QWEN_TTS_VOICE: "${OPENAI_TTS_VOICE:-alloy}"
       OPENAI_SPEECH_API_KEY: "${OPENAI_SPEECH_API_KEY:-${LLM_API_KEY:-dev-dummy-key}}"
@@ -441,7 +401,7 @@ services:
       AUTH_CLIENT_SECRET: dev-only-t10-workbench-client-secret-change-me
       WORKBENCH_PUBLIC_URL: http://127.0.0.1:28083
       WORKBENCH_SESSION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
-      AGENT_URLS: assistant=http://agent-pi:9800,sales=http://agent-sales:9810,ti=http://agent-ti:18120/agents/ti
+      AGENT_URLS: assistant=http://agent-pi:9800,ti=http://agent-ti:18120/agents/ti
       MODULE_URLS: collab=http://t10-collab:8082,agents=http://t10-agent-control:8085,knowledge=http://t10-knowledge:18050,automations=http://t10-automations:18030
       LIVEKIT_URL: ws://127.0.0.1:8890
     ports:
@@ -487,6 +447,5 @@ services:
 volumes:
   postgres-data:
   agent-data:
-  sales-data:
   agents-volume:
   agent-ti-data:
