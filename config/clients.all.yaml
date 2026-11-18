@@ -57,15 +57,10 @@ runtimes:
   - name: t10-livekit-agent
     voice: true
     actions: [agent:use, work:read, work:write, knowledge:read, property:read, property:propose]
-    audiences: [agent-pi, agent-sales, agent-ti, t10-collab, t10-knowledge, t10-property, ai-gateway-tools, ai-gateway-llm]
+    audiences: [agent-pi, agent-ti, t10-collab, t10-knowledge, t10-property, ai-gateway-tools, ai-gateway-llm]
   - name: agent-pi
     actions: [agent:use, work:read, work:write, knowledge:read, property:read, property:propose]
     audiences: [agent-pi, t10-collab, t10-knowledge, t10-property, ai-gateway-tools, ai-gateway-llm]
-    tool_audience: ai-gateway-tools
-    model_audience: ai-gateway-llm
-  - name: agent-sales
-    actions: [agent:use, work:read, work:write, knowledge:read]
-    audiences: [agent-sales, t10-collab, t10-knowledge, ai-gateway-tools, ai-gateway-llm]
     tool_audience: ai-gateway-tools
     model_audience: ai-gateway-llm
   - name: agent-ti
@@ -87,6 +82,6 @@ runtimes:
   - name: t10-automations
     optional: true
     actions: [agent:use, work:read, work:write, work:send, knowledge:read, property:read, property:propose]
-    audiences: [ai-gateway, agent-pi, agent-sales, agent-ti, t10-collab, t10-knowledge, t10-property, ai-gateway-tools, ai-gateway-llm]
+    audiences: [ai-gateway, agent-pi, agent-ti, t10-collab, t10-knowledge, t10-property, ai-gateway-tools, ai-gateway-llm]
 
 exchangers: [ai-gateway-tools]

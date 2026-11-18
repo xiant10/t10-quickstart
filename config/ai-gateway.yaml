@@ -68,7 +68,7 @@ providers:
     native_responses_api: false
 
 models:
-  # Standard platform model aliases for agents (agent-pi, agent-sales, etc.)
+  # Standard platform model aliases for agents (agent-pi, agent-ti, etc.)
   smart:
     providers: ["openai"]
     actual_model:

@@ -16,21 +16,6 @@
     "quickstart-0": "http://agent-pi:9800"
    }
   },
-  "sales": {
-   "state": "active",
-   "audience": "agent-sales",
-   "capabilities": [
-    "steer",
-    "interrupt",
-    "voice",
-    "retry",
-    "background_tasks",
-    "durable_runs"
-   ],
-   "replicas": {
-    "sales-quickstart-0": "http://agent-sales:9810"
-   }
-  },
   "ti": {
    "agent": "ti",
    "state": "active",
@@ -66,15 +51,6 @@
      "pool": "assistant"
     }
    ]
-  },
-  "sales": {
-   "title": "Sales",
-   "routes": [
-    {
-     "pool": "sales"
-    }
-   ],
-   "open": true
   },
   "ti": {
    "title": "Ti Assistant",
