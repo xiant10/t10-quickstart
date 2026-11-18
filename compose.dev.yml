@@ -11,3 +11,13 @@ services:
     build: !override ../agent-pi
   workbench:
     build: !override ../workbench
+  # The one endpoint for these images' docs, at http://127.0.0.1:28400/mcp. Only
+  # here: it's built from the t10 workspace this checkout sits in, which isn't public.
+  t10-docs:
+    build:
+      context: ..
+      dockerfile: docs-server/Dockerfile
+    environment:
+      DOCS_SOURCES: auth-server=http://auth-server:8081,t10-collab=http://t10-collab:8082,agent-pi=http://agent-pi:9800,workbench=http://workbench:8083
+    ports:
+      - "127.0.0.1:28400:18400"
