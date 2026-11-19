@@ -24,12 +24,15 @@ audit:
   # Rolling window used to compute the throughput figures (requests/min,
   # tokens/sec) shown on the audit UI.
   stats_window: 5m
+  # Every call's whole request, reply and provider exchanges stay in audit.
+  # On unless set to false.
+  store_bodies: true
   # The audit UI is reached through the platform console, which sends this key.
   # Without it the UI isn't served.
   console_key: "${AUDIT_CONSOLE_KEY}"
 
-# Audit holds no prompts or replies. The debug capture keeps them, for a tenant
-# a platform admin turns it on for in t10-console, for at most 7 days.
+# The debug capture: a second copy of one tenant's calls, while a platform admin
+# has it on in t10-console, for at most 7 days.
 capture:
   dir: capture
 
