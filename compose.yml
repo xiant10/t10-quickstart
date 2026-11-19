@@ -53,6 +53,8 @@ services:
       AUTH_DEV_MODE: "true"
       AUTH_PUBLIC_URL: http://localhost:28081
       AUTH_WORKBENCH_URL: http://127.0.0.1:28083
+      # One language for everyone, such as T10_LANGUAGES=zh-Hans; unset offers all.
+      AUTH_LANGUAGES: ${T10_LANGUAGES:-}
       AUTH_TOTP_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/auth?sslmode=disable
       LIVEKIT_URL: ws://localhost:8890

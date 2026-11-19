@@ -68,6 +68,8 @@ By default, Docker Compose loads `compose.yml`, which pulls pre-built multi-arch
 
 The one-shot `seed` service exits after creating the sample tenant and administrator, which is expected.
 
+To give everyone one language, set `T10_LANGUAGES=zh-Hans` in `.env` (comma-separate several, the default first). Unset, people choose English or Simplified Chinese on their account page, and every app follows it.
+
 ---
 
 ## Default User Logins & Authentication
