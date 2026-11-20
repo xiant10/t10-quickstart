@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Proves the stack works with no provider or key: starts a separate copy with a
 # scripted model, sends one turn and one tool call straight at the harness, and
-# removes it. A change that needs a gateway fails here. Stop your own stack
-# first, because they use the same ports. Set DEV=1 to build from sibling
-# checkouts, as the t10 workspace's `make light-smoke` does.
+# removes it, from the pinned images. A change that needs a gateway fails here.
+# Stop your own stack first, because they use the same ports. Set DEV=1 to build
+# from sibling checkouts, as the t10 workspace's `make light-smoke` does.
 set -euo pipefail
 cd "$(dirname "$0")"
 
 export LLM_BASE_URL=http://fake-model:8080 LLM_API_KEY=unused FAST_MODEL_ID=scripted SMART_MODEL_ID=scripted
-files=(-f docker-compose.yml -f scripted/compose.yml)
+files=(-f compose.yml -f scripted/compose.yml)
 [ -z "${DEV:-}" ] || files+=(-f compose.dev.yml)
 compose() { docker compose -p t10-quickstart-check "${files[@]}" "$@"; }
 [ "${KEEP:-}" = 1 ] || trap 'compose down -v --remove-orphans >/dev/null 2>&1' EXIT
