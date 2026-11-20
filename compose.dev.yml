@@ -1,16 +1,22 @@
-# Builds from sibling checkouts instead of the pinned commits, to try local
-# changes: docker compose -f docker-compose.yml -f compose.dev.yml up -d --build --wait
+# Builds from sibling checkouts instead of the pinned images, to try local
+# changes: docker compose -f compose.yml -f compose.dev.yml up -d --build --wait
+# The builds get their own image names, so they never stand in for a pinned one.
 services:
   seed:
-    build: !override ../auth-server
+    image: !reset null
+    build: ../auth-server
   auth-server:
-    build: !override ../auth-server
+    image: !reset null
+    build: ../auth-server
   t10-collab:
-    build: !override ../t10-collab
+    image: !reset null
+    build: ../t10-collab
   agent-pi:
-    build: !override ../agent-pi
+    image: !reset null
+    build: ../agent-pi
   workbench:
-    build: !override ../workbench
+    image: !reset null
+    build: ../workbench
   # The one endpoint for these images' docs, at http://127.0.0.1:28220/mcp. Only
   # here: it's built from the t10 workspace this checkout sits in, which isn't public.
   t10-docs:

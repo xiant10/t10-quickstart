@@ -58,13 +58,15 @@ Set your model provider credentials in `.env`, then start the stack:
 docker compose up -d --wait
 ```
 
-By default, Docker Compose loads `compose.yml`, which pulls pre-built multi-architecture images from GitHub Container Registry (`ghcr.io`), boots in seconds, and seeds the default admin account.
+Docker Compose loads `compose.yml`, which pulls pre-built multi-architecture images from GitHub Container Registry (`ghcr.io`) and seeds the default admin account. Each image is pinned by the commit it was built from, and each [release tag](https://github.com/xiant10/t10-quickstart/tags) marks a set that was checked together.
 
-*(To build all images locally from source instead, run `docker compose -f docker-compose.yml up -d --build --wait`)*
+To run every platform component, with `ai-gateway`, `agent-ti`, the console, knowledge, automations and live calls, use `compose.all.yml`:
 
-*(To run all platform components including all modules, gateways, and agent harnesses, run `docker compose -f compose.all.yml up -d --wait`)*
+```sh
+docker compose -f compose.all.yml up -d --wait
+```
 
-> **Using `compose.all.yml`?** Add `-f compose.all.yml` to every `docker compose` command below, and note the ports it publishes are listed at the top of that file. Its agent logs `control.feed_stale … status 403` until a platform admin publishes a runtime config in the console; until then agents use their built-in skills, which is harmless.
+> **Using `compose.all.yml`?** Add `-f compose.all.yml` to every `docker compose` command below. The ports it publishes are listed at the top of that file, and the console is at <http://127.0.0.1:28020>. Model calls go through `ai-gateway`, which keeps an audit of them in Postgres for the console's **Model calls** page. `FAST_MODEL_NAME` and `SMART_MODEL_NAME` in `.env` name your provider's models.
 
 The one-shot `seed` service exits after creating the sample tenant and administrator, which is expected.
 
@@ -219,7 +221,7 @@ docker compose down -v     # Deletes everything
 To build from your own checkouts, put them beside this folder, using the repo names as folder names:
 
 ```sh
-docker compose -f docker-compose.yml -f compose.dev.yml up -d --build --wait
+docker compose -f compose.yml -f compose.dev.yml up -d --build --wait
 ```
 
 ## License
