@@ -224,6 +224,10 @@ To build from your own checkouts, put them beside this folder, using the repo na
 docker compose -f compose.yml -f compose.dev.yml up -d --build --wait
 ```
 
+## Contact
+
+Questions, feedback or commercial enquiries: [hi@tacten.ai](mailto:hi@tacten.ai).
+
 ## License
 
 Apache License 2.0. See [LICENSE](LICENSE).
