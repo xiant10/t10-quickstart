@@ -38,6 +38,29 @@ flowchart LR
 
 When the model calls a tool, `agent-pi` mints a short-lived token from a grant tied to your conversation. `t10-collab` refuses anything else, including your own sign-in token, so the agent can do no more than you can.
 
+## Try it without installing anything
+
+A hosted demo of the whole platform is up at <https://t10-workbench.platform.tacten.ai>. Sign in with any account below to chat with the agents, work on tasks, search knowledge, send a voice message, or start a live call.
+
+| Sign-in name | Password | Role in tenant Acme | Stands for |
+| :--- | :--- | :--- | :--- |
+| `alice@platform.tacten.ai` | `f01097f5c486` | Tenant admin | manages members, roles and agent settings |
+| `bob@platform.tacten.ai` | `35f33837c6a6` | Member | sales |
+| `carol@platform.tacten.ai` | `93d81d624e30` | Member | support |
+| `dave@platform.tacten.ai` | `9e5266e3927e` | Member | finance |
+| `erin@platform.tacten.ai` | `799c934a1f7a` | Member | engineering |
+| `frank@platform.tacten.ai` | `f292f01853d6` | Member | facilities |
+
+- **Shared and public.** Everyone who reads this can use these accounts at once, and they all see the same tenant, **Acme**. Don't enter anything you want to keep private. Please don't change a password.
+- **Not always on.** The demo runs on one machine and is up only while that machine is. It may be reset, and its passwords may change.
+- **Language.** If the pages open in Chinese, press **English** on the account page. Every app follows it.
+- **Voice.** Voice messages and live calls need a microphone, and your browser will ask for access.
+- **Admin access isn't included.** The platform administrator, and the console for managing every tenant and user, are not part of the shared demo. For those, run the stack below and sign in with the default administrator.
+
+To run your own copy, with everything on your machine, continue below.
+
+---
+
 ## Before you start
 
 - Docker with Compose 2.24.4 or later
