@@ -72,7 +72,7 @@ services:
       retries: 10
 
   seed:
-    image: ghcr.io/xiant10/auth-server:sha-f18ecc6
+    image: ghcr.io/xiant10/auth-server:sha-a18042c
     entrypoint:
       - /bin/sh
       - -c
@@ -107,7 +107,7 @@ services:
 
   auth-server:
     restart: unless-stopped
-    image: ghcr.io/xiant10/auth-server:sha-f18ecc6
+    image: ghcr.io/xiant10/auth-server:sha-a18042c
     environment:
       AUTH_DEV_MODE: "true"
       AUTH_PUBLIC_URL: http://localhost:28081
@@ -135,7 +135,7 @@ services:
 
   t10-agent-control:
     restart: unless-stopped
-    image: ghcr.io/xiant10/t10-agent-control:sha-a048d12
+    image: ghcr.io/xiant10/t10-agent-control:sha-7f84406
     environment:
       AGENT_CONTROL_LISTEN_ADDR: ":8085"
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/agent_control?sslmode=disable
@@ -160,7 +160,7 @@ services:
   # Publishes the first routing configuration. Until one exists, the console's
   # Fleet page warns and the skills feed answers 403. It skips if one is live.
   agent-routes:
-    image: ghcr.io/xiant10/t10-agent-control:sha-a048d12
+    image: ghcr.io/xiant10/t10-agent-control:sha-7f84406
     entrypoint:
       - /bin/sh
       - -c
@@ -183,7 +183,7 @@ services:
 
   ai-gateway-llm:
     restart: unless-stopped
-    image: ghcr.io/xiant10/ai-gateway:sha-95b46a3
+    image: ghcr.io/xiant10/ai-gateway:sha-28220e2
     # The image's own config.yaml. Audit, the debug capture and control's last
     # feed are relative to the working directory, on the gateway-data volume.
     working_dir: /app/data
@@ -219,7 +219,7 @@ services:
 
   ai-gateway-agent:
     restart: unless-stopped
-    image: ghcr.io/xiant10/ai-gateway:sha-95b46a3
+    image: ghcr.io/xiant10/ai-gateway:sha-28220e2
     command: ["-config", "/app/config.agent.yaml"]
     environment:
       AGENT_URLS: assistant.quickstart-0=http://agent-pi:9800,ti.agent-ti-0=http://agent-ti:18120/agents/ti
@@ -242,7 +242,7 @@ services:
 
   t10-automations:
     restart: unless-stopped
-    image: ghcr.io/xiant10/t10-automations:sha-deccfcc
+    image: ghcr.io/xiant10/t10-automations:sha-1216c9e
     environment:
       AUTOMATIONS_LISTEN_ADDR: ":18030"
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/automations?sslmode=disable
@@ -264,7 +264,7 @@ services:
 
   t10-collab:
     restart: unless-stopped
-    image: ghcr.io/xiant10/t10-collab:sha-fe514b8
+    image: ghcr.io/xiant10/t10-collab:sha-b21baeb
     environment:
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/collab?sslmode=disable
       AUTH_ISSUER: http://localhost:28081
@@ -284,7 +284,7 @@ services:
 
   t10-knowledge:
     restart: unless-stopped
-    image: ghcr.io/xiant10/t10-knowledge:sha-685b105
+    image: ghcr.io/xiant10/t10-knowledge:sha-454bb1f
     environment:
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/knowledge?sslmode=disable
       AUTH_ISSUER: http://localhost:28081
@@ -305,7 +305,7 @@ services:
 
   agent-pi:
     restart: unless-stopped
-    image: ghcr.io/xiant10/agent-pi:sha-c55dd40
+    image: ghcr.io/xiant10/agent-pi:sha-022dc54
     environment:
       PORT: "9800"
       AGENT_CONFIG: /app/apps/assistant/config/agent.json
@@ -347,13 +347,13 @@ services:
         condition: service_healthy
 
   t10-agents:
-    image: ghcr.io/xiant10/t10-agents:sha-61a99f7
+    image: ghcr.io/xiant10/t10-agents:sha-b311b88
     volumes:
       - agents-volume:/target
 
   agent-ti:
     restart: unless-stopped
-    image: ghcr.io/xiant10/agent-ti:sha-03e7ab1
+    image: ghcr.io/xiant10/agent-ti:sha-190431c
     environment:
       DEFAULT_AGENT: ti
       AGENT_INSTANCE_ID: agent-ti-0
@@ -395,7 +395,7 @@ services:
 
   t10-livekit-agent:
     restart: unless-stopped
-    image: ghcr.io/xiant10/t10-livekit-agent:sha-06324b4
+    image: ghcr.io/xiant10/t10-livekit-agent:sha-63add66
     environment:
       LIVEKIT_URL: ws://livekit-server:7880
       LIVEKIT_API_KEY: devkey
@@ -422,7 +422,7 @@ services:
 
   workbench:
     restart: unless-stopped
-    image: ghcr.io/xiant10/workbench:sha-9016b46
+    image: ghcr.io/xiant10/workbench:sha-cc08d13
     environment:
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/workbench?sslmode=disable
       AUTH_PUBLIC_URL: http://localhost:28081
@@ -448,7 +448,7 @@ services:
 
   t10-console:
     restart: unless-stopped
-    image: ghcr.io/xiant10/t10-console:sha-7b162e2
+    image: ghcr.io/xiant10/t10-console:sha-ad4fc14
     environment:
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/console?sslmode=disable
       CONSOLE_LISTEN_ADDR: ":8086"
