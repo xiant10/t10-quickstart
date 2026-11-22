@@ -5,8 +5,10 @@ For coding agents working in this repo. The lightweight profile, published: auth
 ## Build and test
 
 ```bash
-./check.sh                      # against the pinned images
-make light-smoke                # from the workspace: against the checkouts beside it
+make lint                 # every Compose file parses
+make test                 # ./check.sh, against the pinned images; stop your own stack first
+make ci                   # what a change needs before it's pushed
+make light-smoke          # from the workspace: against the checkouts beside it
 ```
 
 ## Read first
