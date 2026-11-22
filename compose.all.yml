@@ -321,7 +321,10 @@ services:
       GRANT_ACTIONS: agent:use,work:read,work:write,knowledge:read
       GRANT_AUDIENCES: agent-pi,t10-collab,t10-knowledge,ai-gateway-llm
       COLLAB_MCP_URL: http://t10-collab:8082/mcp
-      LLM_IDENTITY_HEADERS: none
+      # Model calls go to ai-gateway-llm, so they carry the tenant, user and run token:
+      # its audit, usage and quota count each tenant. Only the Light compose.yml, which
+      # can point at a provider directly, sends none.
+      LLM_IDENTITY_HEADERS: gateway
       LLM_BASE_URL: http://ai-gateway-llm:18080/v1
       LLM_API_KEY: dev-gateway-api-key
       LLM_API: "${LLM_API:-chat-completions}"
