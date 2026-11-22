@@ -72,7 +72,7 @@ services:
       retries: 10
 
   seed:
-    image: ghcr.io/xiant10/auth-server:sha-aead120
+    image: ghcr.io/xiant10/auth-server:sha-f18ecc6
     entrypoint:
       - /bin/sh
       - -c
@@ -107,7 +107,7 @@ services:
 
   auth-server:
     restart: unless-stopped
-    image: ghcr.io/xiant10/auth-server:sha-aead120
+    image: ghcr.io/xiant10/auth-server:sha-f18ecc6
     environment:
       AUTH_DEV_MODE: "true"
       AUTH_PUBLIC_URL: http://localhost:28081
