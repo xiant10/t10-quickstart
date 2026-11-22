@@ -72,7 +72,7 @@ services:
       retries: 10
 
   seed:
-    image: ghcr.io/xiant10/auth-server:sha-f1e0b06
+    image: ghcr.io/xiant10/auth-server:sha-3cb4205
     entrypoint:
       - /bin/sh
       - -c
@@ -107,7 +107,7 @@ services:
 
   auth-server:
     restart: unless-stopped
-    image: ghcr.io/xiant10/auth-server:sha-f1e0b06
+    image: ghcr.io/xiant10/auth-server:sha-3cb4205
     environment:
       AUTH_DEV_MODE: "true"
       AUTH_PUBLIC_URL: http://localhost:28081
@@ -183,7 +183,7 @@ services:
 
   ai-gateway-llm:
     restart: unless-stopped
-    image: ghcr.io/xiant10/ai-gateway:sha-4047dee
+    image: ghcr.io/xiant10/ai-gateway:sha-95b46a3
     # The image's own config.yaml. Audit, the debug capture and control's last
     # feed are relative to the working directory, on the gateway-data volume.
     working_dir: /app/data
@@ -219,7 +219,7 @@ services:
 
   ai-gateway-agent:
     restart: unless-stopped
-    image: ghcr.io/xiant10/ai-gateway:sha-4047dee
+    image: ghcr.io/xiant10/ai-gateway:sha-95b46a3
     command: ["-config", "/app/config.agent.yaml"]
     environment:
       AGENT_URLS: assistant.quickstart-0=http://agent-pi:9800,ti.agent-ti-0=http://agent-ti:18120/agents/ti
@@ -448,7 +448,7 @@ services:
 
   t10-console:
     restart: unless-stopped
-    image: ghcr.io/xiant10/t10-console:sha-315c9ce
+    image: ghcr.io/xiant10/t10-console:sha-7b162e2
     environment:
       DATABASE_URL: postgres://t10:quickstart-dev-password@postgres:5432/console?sslmode=disable
       CONSOLE_LISTEN_ADDR: ":8086"
