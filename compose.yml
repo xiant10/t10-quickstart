@@ -133,6 +133,9 @@ services:
       AUTH_CLIENT_SECRET: dev-only-t10-workbench-client-secret-change-me
       WORKBENCH_PUBLIC_URL: http://127.0.0.1:28083
       WORKBENCH_SESSION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      # Where the workbench sends the agent's calls, <agent>=url. The light stack has no
+      # ai-gateway-agent, so it names the harness directly: chat works, voice messages don't.
+      # compose.all.yml points it at ai-gateway-agent instead.
       AGENT_URLS: assistant=http://agent-pi:9800
       MODULE_URLS: collab=http://t10-collab:8082
       LIVEKIT_URL: ws://localhost:8890

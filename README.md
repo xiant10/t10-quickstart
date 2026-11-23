@@ -127,14 +127,14 @@ To run every platform component, with `ai-gateway`, `agent-ti`, the console, kno
 docker compose -f compose.all.yml up -d --wait
 ```
 
-> **Using `compose.all.yml`?** Add `-f compose.all.yml` to every `docker compose` command in this README. The ports it publishes are listed at the top of that file, and the platform console is at <http://127.0.0.1:28020>. Model calls go through `ai-gateway`, which keeps an audit of them in Postgres for the console's **Model calls** page. `FAST_MODEL_NAME` and `SMART_MODEL_NAME` in `.env` name your provider's models.
+> **Using `compose.all.yml`?** Add `-f compose.all.yml` to every `docker compose` command in this README. The ports it publishes are listed at the top of that file, and the platform console is at <http://127.0.0.1:28020>. Model calls go through `ai-gateway`, which keeps an audit of them in Postgres for the console's **Model calls** page. `FAST_MODEL_NAME` and `SMART_MODEL_NAME` in `.env` name your provider's models. Voice messages and live calls need speech keys as well: see [Voice](#voice-full-stack).
 
 The light stack leaves out the following, and the full stack adds them:
 
 | Not in the light stack | What it adds |
 | --- | --- |
 | LiveKit and a voice worker | Live calls. The **Call** button in `workbench` doesn't work in the light stack |
-| `ai-gateway` | Several replicas, model aliases, provider fallback, quotas and model-call audit |
+| `ai-gateway` | Voice messages, several replicas, model aliases, provider fallback, quotas and model-call audit |
 | Other MCP servers (such as weather) | Additional domain tools. The light stack wires up `t10-collab` for task management |
 
 ---
@@ -174,12 +174,60 @@ Any endpoint that serves OpenAI-style `/chat/completions`, with streaming and to
 | Provider | `LLM_BASE_URL` | Tested |
 | --- | --- | --- |
 | Alibaba Cloud DashScope | `https://dashscope.aliyuncs.com/compatible-mode/v1` | Yes, with `qwen-flash` |
+| OpenRouter | `https://openrouter.ai/api/v1` | Yes, on the full stack with `openai/gpt-4o-mini`, tool calls included |
 | OpenAI | `https://api.openai.com/v1` | No |
 | A local server such as Ollama | `http://host.docker.internal:11434/v1` | No. Set `LLM_API_KEY` to any value |
 
-Multi-step requests depend on the model. A weak model may skip a step or stop to ask first.
+OpenRouter names models with a vendor prefix, so set both names with it:
+
+```sh
+LLM_BASE_URL=https://openrouter.ai/api/v1
+LLM_API_KEY=sk-or-v1-...
+FAST_MODEL_NAME=openai/gpt-4o-mini      # compose.all.yml
+SMART_MODEL_NAME=openai/gpt-4o-mini
+FAST_MODEL_ID=openai/gpt-4o-mini        # compose.yml
+SMART_MODEL_ID=openai/gpt-4o-mini
+```
+
+OpenRouter holds back credit for the longest reply a request could get, so a low balance answers `402` ("maximum cost exceeds your available credits") for a dearer model even when a cheap one still works.
+
+Multi-step requests depend on the model. A weak model may skip a step or stop to ask first: `gpt-4o-mini` often asks to confirm before it creates a task.
 
 There's no spending limit in this stack, so set one at your provider.
+
+### Voice (full stack)
+
+`compose.all.yml` has two kinds of voice, which take speech from different places:
+
+| | Voice message (the microphone in the composer) | Live call (the **Call** button) |
+| --- | --- | --- |
+| Path | `workbench` → `ai-gateway-agent` → `ai-gateway-llm` → DashScope | `workbench` → LiveKit → the voice worker, `t10-livekit-agent` |
+| Speech to text | DashScope realtime, with words shown as they're heard | `STT_PROVIDER`: `openai` (the default) or `qwen` |
+| Text to speech | None: the reply is text | `TTS_PROVIDER`: `openai` (the default) or `qwen` |
+| Key | `DASHSCOPE_API_KEY` | `OPENAI_SPEECH_API_KEY`, or `LLM_API_KEY` without it, for `openai`. `DASHSCOPE_API_KEY` for `qwen` |
+
+Voice messages need `DASHSCOPE_API_KEY` whichever model provider you use. Live calls can use any of these, set in `.env`:
+
+| Live-call speech | `.env` | Tested |
+| --- | --- | --- |
+| DashScope | `STT_PROVIDER=qwen`, `TTS_PROVIDER=qwen`, `QWEN_TTS_VOICE=Cherry` | Yes, with live captions |
+| OpenRouter | See below | Yes. No live captions, so the text shows once you stop speaking |
+| OpenAI | `OPENAI_SPEECH_API_KEY=sk-...` when `LLM_API_KEY` isn't an OpenAI key | No |
+
+```sh
+# Live calls through OpenRouter: Whisper hears, Kokoro speaks
+STT_PROVIDER=openai
+TTS_PROVIDER=openai
+OPENAI_SPEECH_BASE_URL=https://openrouter.ai/api/v1
+OPENAI_STT_MODEL=openai/whisper-1
+OPENAI_TTS_MODEL=hexgrad/kokoro-82m
+QWEN_TTS_VOICE=af_alloy    # a Kokoro voice; OpenAI's alloy isn't one
+TTS_TIMEOUT_MS=20000       # a sentence sometimes takes 8 seconds, past the default
+```
+
+With OpenRouter, a reply started about 4 seconds after the caller stopped speaking: about 2 seconds to hear, 1 for the model and 1 for the first audio. OpenRouter's speech API is batch only, so the worker can't show text while you're still speaking.
+
+A key set in the wrong place doesn't fail at start: the call connects, then the worker logs `401` for every utterance. Check with `docker compose -f compose.all.yml logs t10-livekit-agent`.
 
 ### Language
 
@@ -262,6 +310,11 @@ docker compose up -d
 | `port is already allocated` | Something else holds one of the ports. For `check.sh`, stop your own stack first |
 | The reply never arrives | Check `docker compose logs agent-pi` for an error from your provider |
 | The agent says it did something, but no row appears | The model didn't call a tool. Try a stronger model |
+| `402` from OpenRouter | Too little credit for the model's longest reply. Add credit or use a cheaper model |
+| A voice message fails at once, and the workbench logs `404` for `/api/agents/…/voice` | The workbench's `AGENT_URLS` names a harness. In `compose.all.yml` every entry must be `ai-gateway-agent` |
+| A voice message fails, though the workbench logs `200` for `/api/agents/…/voice` | `DASHSCOPE_API_KEY` is missing from `.env`, or its account can't pay for speech |
+| A call connects, but the agent can't hear you or stays silent | The voice worker's speech key is wrong: `logs t10-livekit-agent` shows `401`. See [Voice](#voice-full-stack) |
+| A live-call reply skips a sentence, with `tts failed … context deadline exceeded` | The speech provider is slow. Raise `TTS_TIMEOUT_MS` |
 
 ## Working on the services
 
