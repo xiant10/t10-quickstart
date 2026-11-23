@@ -175,7 +175,7 @@ Any endpoint that serves OpenAI-style `/chat/completions`, with streaming and to
 | --- | --- | --- |
 | Alibaba Cloud DashScope | `https://dashscope.aliyuncs.com/compatible-mode/v1` | Yes, with `qwen-flash` |
 | OpenRouter | `https://openrouter.ai/api/v1` | Yes, on the full stack with `openai/gpt-4o-mini`, tool calls included |
-| OpenAI | `https://api.openai.com/v1` | No |
+| OpenAI | `https://api.openai.com/v1` | Yes, on both stacks with the defaults, `gpt-4o-mini` and `gpt-4o`, tool calls included |
 | A local server such as Ollama | `http://host.docker.internal:11434/v1` | No. Set `LLM_API_KEY` to any value |
 
 OpenRouter names models with a vendor prefix, so set both names with it:
@@ -210,9 +210,11 @@ Voice messages need `DASHSCOPE_API_KEY` whichever model provider you use. Live c
 
 | Live-call speech | `.env` | Tested |
 | --- | --- | --- |
+| OpenAI | Nothing when `LLM_API_KEY` is an OpenAI key. Otherwise `OPENAI_SPEECH_API_KEY=sk-...` | Yes, with live captions, using the defaults `gpt-4o-mini-transcribe` and `gpt-4o-mini-tts` |
 | DashScope | `STT_PROVIDER=qwen`, `TTS_PROVIDER=qwen`, `QWEN_TTS_VOICE=Cherry` | Yes, with live captions |
 | OpenRouter | See below | Yes. No live captions, so the text shows once you stop speaking |
-| OpenAI | `OPENAI_SPEECH_API_KEY=sk-...` when `LLM_API_KEY` isn't an OpenAI key | No |
+
+With OpenAI, a reply started 1.5 to 2 seconds after the caller stopped speaking: under a second each to hear, for the model and for the first audio. For live captions the worker sends speech in pieces of 1.5 to 4 seconds, so a word that spans two pieces can be misheard: "Renew the Acme contract" once became "Renew the ACT-ME contract".
 
 ```sh
 # Live calls through OpenRouter: Whisper hears, Kokoro speaks
@@ -225,7 +227,7 @@ QWEN_TTS_VOICE=af_alloy    # a Kokoro voice; OpenAI's alloy isn't one
 TTS_TIMEOUT_MS=20000       # a sentence sometimes takes 8 seconds, past the default
 ```
 
-With OpenRouter, a reply started about 4 seconds after the caller stopped speaking: about 2 seconds to hear, 1 for the model and 1 for the first audio. OpenRouter's speech API is batch only, so the worker can't show text while you're still speaking.
+With OpenRouter, a reply started about 4 seconds after the caller stopped speaking: about 2 seconds to hear, 1 for the model and 1 for the first audio. OpenRouter's speech API is batch only, so the worker can't show text while you're still speaking, but it hears each utterance whole.
 
 A key set in the wrong place doesn't fail at start: the call connects, then the worker logs `401` for every utterance. Check with `docker compose -f compose.all.yml logs t10-livekit-agent`.
 
