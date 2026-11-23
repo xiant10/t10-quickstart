@@ -200,6 +200,8 @@ services:
       AI_GATEWAY_LLM_CLIENT_SECRET: dev-only-ai-gateway-llm-service-secret-change-me
       AGENT_CONTROL_URL: http://t10-agent-control:8085
       MODEL_KEYS_CACHE: /app/data/model-keys-feed.json
+      # Voice messages' speech to text goes through this gateway, to DashScope.
+      DASHSCOPE_API_KEY: "${DASHSCOPE_API_KEY:-dev-dummy-dashscope-key}"
       AUDIT_CONSOLE_KEY: dev-audit-key
       # Model-call audit goes to Postgres, where it survives the container.
       AUDIT_STORE: postgres
@@ -404,16 +406,24 @@ services:
       AUTH_URL: http://auth-server:8081
       AUTH_CLIENT_SECRET: dev-only-t10-livekit-agent-secret-change-me
       DASHSCOPE_API_KEY: "${DASHSCOPE_API_KEY:-dev-dummy-dashscope-key}"
-      # Speech to text and text to speech both go through OpenAI, so no DashScope key is needed.
-      STT_PROVIDER: openai
-      TTS_PROVIDER: openai
+      # Speech to text and text to speech go through OpenAI unless .env sets STT_PROVIDER and
+      # TTS_PROVIDER to qwen, which uses DASHSCOPE_API_KEY and QWEN_TTS_VOICE.
+      STT_PROVIDER: "${STT_PROVIDER:-openai}"
+      TTS_PROVIDER: "${TTS_PROVIDER:-openai}"
       # Replies come from the agents, which keep the conversation, so calls are saved with the chat.
       LLM_PROVIDER: agent_pi
       # No AGENT_CONTROL_URL: with it set, routes come only from control, which has none published here.
+      # AGENT_URLS here is a replica table, as on ai-gateway-agent: <agent>.<AGENT_INSTANCE_ID>=harness,
+      # so a call reaches the replica that holds its session. It's not the workbench's AGENT_URLS below.
       AGENT_URLS: assistant.quickstart-0=http://agent-pi:9800,ti.agent-ti-0=http://agent-ti:18120/agents/ti
-      # The worker passes this voice to whichever TTS is on, so it must be an OpenAI voice.
-      QWEN_TTS_VOICE: "${OPENAI_TTS_VOICE:-alloy}"
+      # The worker passes this voice to whichever TTS is on, so it must be one that TTS has.
+      QWEN_TTS_VOICE: "${QWEN_TTS_VOICE:-${OPENAI_TTS_VOICE:-alloy}}"
       OPENAI_SPEECH_API_KEY: "${OPENAI_SPEECH_API_KEY:-${LLM_API_KEY:-dev-dummy-key}}"
+      OPENAI_SPEECH_BASE_URL: "${OPENAI_SPEECH_BASE_URL:-https://api.openai.com/v1}"
+      OPENAI_STT_MODEL: "${OPENAI_STT_MODEL:-gpt-4o-mini-transcribe}"
+      OPENAI_TTS_MODEL: "${OPENAI_TTS_MODEL:-gpt-4o-mini-tts}"
+      # How long one sentence's speech may take; a slower provider needs more.
+      TTS_TIMEOUT_MS: "${TTS_TIMEOUT_MS:-8000}"
     depends_on:
       livekit-server:
         condition: service_healthy
@@ -430,7 +440,11 @@ services:
       AUTH_CLIENT_SECRET: dev-only-t10-workbench-client-secret-change-me
       WORKBENCH_PUBLIC_URL: http://127.0.0.1:28083
       WORKBENCH_SESSION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
-      AGENT_URLS: assistant=http://agent-pi:9800,ti=http://agent-ti:18120/agents/ti
+      # The workbench's AGENT_URLS is where it sends each agent's calls, <agent>=url, not a replica
+      # table. Every entry must be ai-gateway-agent: it routes on the session ID and serves
+      # /agent/voice. Pointed at a harness, chat still works but voice messages get a 404,
+      # because the harnesses have no /agent/voice.
+      AGENT_URLS: assistant=http://ai-gateway-agent:18090,ti=http://ai-gateway-agent:18090
       MODULE_URLS: collab=http://t10-collab:8082,agents=http://t10-agent-control:8085,knowledge=http://t10-knowledge:18050,automations=http://t10-automations:18030
       LIVEKIT_URL: ws://127.0.0.1:8890
     ports:
@@ -441,6 +455,8 @@ services:
       timeout: 3s
       retries: 12
     depends_on:
+      ai-gateway-agent:
+        condition: service_healthy
       agent-pi:
         condition: service_healthy
       t10-collab:
