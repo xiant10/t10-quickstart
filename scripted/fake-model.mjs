@@ -1,6 +1,7 @@
 // A scripted OpenAI-compatible model. /seen lists the identity headers it has
-// received, so the smoke test can prove none reach a provider. When work_create
-// is offered it calls it, then quotes the new ID, which completes one agent loop.
+// received, so the smoke test can prove none reach a provider. When work_act is
+// offered it makes a task with it, as an assistant does, then quotes the new ID,
+// which completes one agent loop.
 import { createServer } from "node:http";
 
 const seen = [];
@@ -13,8 +14,9 @@ createServer(async (req, res) => {
 	seen.push(...Object.keys(req.headers).filter((name) => ["x-user-id", "x-tenant-id", "x-session-id", "x-turn-id"].includes(name)));
 	res.writeHead(200, { "content-type": "text/event-stream" });
 	const chunk = (delta, finish_reason = null) => `data: ${JSON.stringify({ id: "c", object: "chat.completion.chunk", choices: [{ index: 0, delta, finish_reason }] })}\n\n`;
-	if (last.role === "user" && tools.some((tool) => tool.function.name === "work_create")) {
-		const call = { index: 0, id: "call_1", type: "function", function: { name: "work_create", arguments: JSON.stringify({ title: "Light profile task" }) } };
+	if (last.role === "user" && tools.some((tool) => tool.function.name === "work_act")) {
+		const args = { action: "work_item.create", params: { title: "Light profile task" }, request_id: `light-${Date.now()}` };
+		const call = { index: 0, id: "call_1", type: "function", function: { name: "work_act", arguments: JSON.stringify(args) } };
 		return res.end(`${chunk({ role: "assistant", tool_calls: [call] })}${chunk({}, "tool_calls")}data: [DONE]\n\n`);
 	}
 	const created = last.role === "tool" ? JSON.stringify(last.content).match(/wi_[0-9a-f]+/)?.[0] : undefined;

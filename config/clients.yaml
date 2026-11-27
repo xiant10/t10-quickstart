@@ -20,5 +20,5 @@ clients:
 
 runtimes:
   - name: agent-pi
-    actions: [agent:use, work:read, work:write]
+    actions: [agent:use, work:read, work:propose, work:act]
     audiences: [agent-pi, t10-collab]

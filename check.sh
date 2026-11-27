@@ -40,7 +40,7 @@ identity=$(compose exec -T fake-model node -e "fetch('http://127.0.0.1:8080/seen
 [ "$identity" = '[]' ] || { echo "identity headers reached the provider: $identity" >&2; exit 1; }
 
 session=$(rpc session.create '{}' | sed -n 's/.*"sessionId":"\([^"]*\)".*/\1/p')
-reply=$(rpc session.prompt '{"input":"work create: create a new work item for the user"}' "$session")
+reply=$(rpc session.prompt '{"input":"work act: make a new task for the user, which they can undo"}' "$session")
 case "$reply" in
 *'created wi_'*) ;;
 *) echo "the tool result never reached the model: $reply" >&2; exit 1 ;;
