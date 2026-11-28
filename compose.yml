@@ -99,7 +99,7 @@ services:
       AUTH_CLIENT_ID: agent-pi
       AUTH_CLIENT_SECRET: dev-only-agent-pi-service-secret-change-me
       # Grants let a run call tools as the person who asked.
-      GRANT_ACTIONS: agent:use,work:read,work:propose,work:act
+      GRANT_ACTIONS: agent:use,work:read,work:propose,work:act,work:apply
       GRANT_AUDIENCES: agent-pi,t10-collab
       COLLAB_MCP_URL: http://t10-collab:8082/mcp
       # A provider directly, so no user or tenant ID leaves with a model call.

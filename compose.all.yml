@@ -320,7 +320,7 @@ services:
       AUTH_URL: http://auth-server:8081
       AUTH_CLIENT_ID: agent-pi
       AUTH_CLIENT_SECRET: dev-only-agent-pi-service-secret-change-me
-      GRANT_ACTIONS: agent:use,work:read,work:propose,work:act,knowledge:read
+      GRANT_ACTIONS: agent:use,work:read,work:propose,work:act,work:apply,knowledge:read
       GRANT_AUDIENCES: agent-pi,t10-collab,t10-knowledge,ai-gateway-llm
       COLLAB_MCP_URL: http://t10-collab:8082/mcp
       # Model calls go to ai-gateway-llm, so they carry the tenant, user and run token:
@@ -372,7 +372,7 @@ services:
       AUTH_CLIENT_ID: agent-ti
       AUTH_CLIENT_SECRET: dev-only-agent-ti-service-secret-change-me
       PROPERTY_AUTH_CLIENT_SECRET: dev-only-agent-ti-property-service-secret-change-me
-      GRANT_ACTIONS: agent:use,work:read,work:propose,work:act,knowledge:read,property:read,property:propose
+      GRANT_ACTIONS: agent:use,work:read,work:propose,work:act,work:apply,knowledge:read,property:read,property:propose
       GRANT_AUDIENCES: agent-ti,t10-collab,t10-knowledge,t10-property,ai-gateway-llm
       COLLAB_MCP_URL: http://t10-collab:8082/mcp
       KNOWLEDGE_MCP_URL: http://t10-knowledge:18050/mcp
